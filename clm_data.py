@@ -16,6 +16,7 @@ class CLMDataManager:
         self.neutral_positions = []
         self.closed_positions = []
         self.prices = {}
+        self.fx_rates = {}
         
         # File paths
         self.long_json = "data/JSON_out/clm_long.json"
@@ -84,7 +85,8 @@ class CLMDataManager:
     
     def create_position_id(self, row: pd.Series, strategy: str) -> str:
         """Create unique ID for position"""
-        position_details = str(row.get('Position Details', ''))
+        position_col = 'Position Details' if 'Position Details' in row.index else 'Position'
+        position_details = str(row.get(position_col, ''))
         entry_date = str(row.get('Entry Date', ''))
         entry_value_col = 'Total Entry Value' if strategy == 'long' else 'Entry Value (cash in)'
         entry_value = str(row.get(entry_value_col, ''))
@@ -122,14 +124,49 @@ class CLMDataManager:
     
     def clean_csv_data(self, df):
         """Remove format/instruction rows from CSV"""
-        df = df[~df['Position Details'].str.contains('Data format|How to get', na=False)]
-        df = df.dropna(subset=['Position Details'])
-        df = df[df['Position Details'].str.strip() != '']
+        # Handle both 'Position Details' and 'Position' column names
+        position_col = 'Position Details' if 'Position Details' in df.columns else 'Position'
+        
+        df = df[~df[position_col].str.contains('Data format|How to get', na=False)]
+        df = df.dropna(subset=[position_col])
+        df = df[df[position_col].str.strip() != '']
         return df
+    
+    def _normalize_token_pair(self, pair):
+        """Normalize token pair format for consistent pricing"""
+        if not pair:
+            return pair
+            
+        # Handle different formats:
+        # "SOL + USD" -> "SOL/USDC" 
+        # "SUI + USD" -> "SUI/USDC"
+        # "SOL short" -> "SOL" (for perpetuals)
+        # "SUI short" -> "SUI" (for perpetuals)
+        
+        pair = pair.strip()
+        
+        # Handle perpetual positions (show as token/USDC for pricing)
+        if 'short' in pair.lower():
+            token = pair.replace('short', '').strip().upper()
+            return f"{token}/USDC"  # Return as token/USDC for price display
+        
+        # Handle CLM positions with "TOKEN + USD" format
+        if '+' in pair and 'USD' in pair.upper():
+            token = pair.split('+')[0].strip().upper()
+            # Convert USD to USDC for pricing
+            return f"{token}/USDC"
+        
+        # Handle standard "TOKEN/TOKEN" format (keep as-is)
+        if '/' in pair:
+            return pair
+            
+        return pair
     
     def parse_position(self, row: pd.Series, strategy: str) -> dict:
         """Parse a single position row into standardized format"""
-        position_details = str(row['Position Details'])
+        # Handle both 'Position Details' and 'Position' column names
+        position_col = 'Position Details' if 'Position Details' in row.index else 'Position'
+        position_details = str(row[position_col])
         
         # Extract platform and token pair
         if '|' in position_details:
@@ -139,6 +176,9 @@ class CLMDataManager:
         else:
             platform = str(row.get('Platform', 'Unknown'))
             pair = position_details
+        
+        # Normalize token pair format for pricing
+        pair = self._normalize_token_pair(pair)
         
         # Get entry value (different column names)
         entry_value_col = 'Total Entry Value' if strategy == 'long' else 'Entry Value (cash in)'
@@ -285,7 +325,7 @@ class CLMDataManager:
         print(f"📊 Loaded {total_active} active positions ({len(self.long_positions)} long, {len(self.neutral_positions)} neutral) + {len(self.closed_positions)} closed")
     
     def get_token_prices(self):
-        """Fetch current prices for tokens"""
+        """Fetch current prices for tokens using DefiLlama + CoinGecko"""
         tokens = set()
         all_positions = self.long_positions + self.neutral_positions
         
@@ -297,39 +337,22 @@ class CLMDataManager:
                     tokens.add(token_a.upper())
                     tokens.add(token_b.upper())
         
-        token_map = {
-            'SOL': 'solana',
-            'USDC': 'usd-coin',
-            'ETH': 'ethereum',
-            'BTC': 'bitcoin',
-            'ORCA': 'orca',
-            'RAY': 'raydium',
-            'JLP': 'jupiter-exchange-solana',
-            'WETH': 'ethereum',
-            'USDT': 'tether'
-        }
+        # Add base tokens for wrapped tokens to enable ratio calculations
+        if any(token in ['WBTC', 'CBBTC'] for token in tokens):
+            tokens.add('BTC')
+        if any(token in ['WETH', 'WHETH'] for token in tokens):
+            tokens.add('ETH')
         
-        try:
-            coingecko_ids = ','.join([token_map.get(token, token.lower()) for token in tokens if token in token_map])
-            
-            if coingecko_ids:
-                url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_ids}&vs_currencies=usd"
-                response = requests.get(url, timeout=10)
-                
-                if response.status_code == 200:
-                    price_data = response.json()
-                    
-                    for token, gecko_id in token_map.items():
-                        if gecko_id in price_data:
-                            self.prices[token] = price_data[gecko_id]['usd']
-                    
-                    print(f"📈 Fetched prices for {len(self.prices)} tokens")
-                else:
-                    print(f"⚠️  Price API error: {response.status_code}")
-        except Exception as e:
-            print(f"⚠️  Could not fetch prices: {e}")
-            
-        # Demo prices if API fails
+        # Try DefiLlama first for DeFi tokens
+        self._fetch_defillama_prices(tokens)
+        
+        # Fill gaps with CoinGecko
+        self._fetch_coingecko_prices(tokens)
+        
+        # Fetch FX rates
+        self._fetch_fx_rates()
+        
+        # Demo prices if all APIs fail
         if not self.prices:
             self.prices = {
                 'SOL': 98.50,
@@ -340,30 +363,220 @@ class CLMDataManager:
                 'RAY': 0.85,
                 'JLP': 0.032
             }
-            print("🔄 Using demo prices (API unavailable)")
+            print("🔄 Using demo prices (APIs unavailable)")
+        
+        # Demo FX rates if API fails
+        if not self.fx_rates:
+            self.fx_rates = {
+                'USD_CAD': 1.43,
+                'CAD_USD': 0.70
+            }
+            print("🔄 Using demo FX rates (API unavailable)")
+        
+        # Store timestamp for display
+        self.last_price_update = datetime.now()
+    
+    def _fetch_defillama_prices(self, tokens):
+        """Fetch prices from DefiLlama API"""
+        # DefiLlama coin IDs for your tokens
+        defillama_map = {
+            'SOL': 'coingecko:solana',
+            'ORCA': 'coingecko:orca', 
+            'RAY': 'coingecko:raydium',
+            'JLP': 'solana:27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4',  # JLP token address
+            'USDC': 'coingecko:usd-coin',
+            'ETH': 'coingecko:ethereum',
+            'BTC': 'coingecko:bitcoin',
+            'SUI': 'coingecko:sui',
+            'WETH': 'coingecko:ethereum',
+            'WBTC': 'coingecko:wrapped-bitcoin',
+            'CBBTC': 'coingecko:coinbase-wrapped-btc',
+            'WHETH': 'coingecko:ethereum',  # Wrapped ETH on Solana
+            'USDT': 'coingecko:tether'
+        }
+        
+        try:
+            # Get coins that we have DefiLlama IDs for
+            available_tokens = [token for token in tokens if token in defillama_map]
+            if not available_tokens:
+                return
+                
+            # Build coin IDs string
+            coin_ids = ','.join([defillama_map[token] for token in available_tokens])
+            
+            url = f"https://coins.llama.fi/prices/current/{coin_ids}"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                
+                if 'coins' in price_data:
+                    for token in available_tokens:
+                        coin_id = defillama_map[token]
+                        if coin_id in price_data['coins']:
+                            coin_data = price_data['coins'][coin_id]
+                            if 'price' in coin_data:
+                                self.prices[token] = coin_data['price']
+                    
+                    defillama_count = len([t for t in available_tokens if t in self.prices])
+                    if defillama_count > 0:
+                        print(f"🦙 DefiLlama: {defillama_count} tokens")
+                        
+        except Exception as e:
+            print(f"⚠️  DefiLlama API error: {e}")
+    
+    def _fetch_coingecko_prices(self, tokens):
+        """Fetch prices from CoinGecko API for missing tokens"""
+        # CoinGecko mapping
+        coingecko_map = {
+            'SOL': 'solana',
+            'USDC': 'usd-coin',
+            'ETH': 'ethereum',
+            'BTC': 'bitcoin',
+            'SUI': 'sui',
+            'ORCA': 'orca',
+            'RAY': 'raydium',
+            'JLP': 'jupiter-exchange-solana',
+            'WETH': 'ethereum',
+            'USDT': 'tether'
+        }
+        
+        try:
+            # Only fetch tokens we don't already have
+            missing_tokens = [token for token in tokens if token not in self.prices and token in coingecko_map]
+            if not missing_tokens:
+                return
+                
+            coingecko_ids = ','.join([coingecko_map[token] for token in missing_tokens])
+            
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_ids}&vs_currencies=usd"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                price_data = response.json()
+                
+                for token in missing_tokens:
+                    gecko_id = coingecko_map[token]
+                    if gecko_id in price_data:
+                        self.prices[token] = price_data[gecko_id]['usd']
+                
+                coingecko_count = len([t for t in missing_tokens if t in self.prices])
+                if coingecko_count > 0:
+                    print(f"🦎 CoinGecko: {coingecko_count} tokens")
+                    
+        except Exception as e:
+            print(f"⚠️  CoinGecko API error: {e}")
+        
+        total_fetched = len(self.prices)
+        if total_fetched > 0:
+            print(f"📈 Total prices fetched: {total_fetched} tokens")
+    
+    def _fetch_fx_rates(self):
+        """Fetch FX rates from exchangerate-api.io (free, no API key)"""
+        try:
+            # Get USD to CAD rate (since this API uses USD as base)
+            url = "https://open.er-api.com/v6/latest/USD"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                fx_data = response.json()
+                
+                if fx_data.get('result') == 'success' and 'rates' in fx_data:
+                    usd_cad = fx_data['rates'].get('CAD')
+                    if usd_cad:
+                        self.fx_rates['USD_CAD'] = usd_cad
+                        self.fx_rates['CAD_USD'] = 1.0 / usd_cad
+                        print(f"💱 FX rates: 1 USD = ${usd_cad:.4f} CAD")
+                        
+        except Exception as e:
+            print(f"⚠️  FX API error: {e}")
     
     def update_position_status(self):
         """Update current price and range status for positions"""
         all_positions = self.long_positions + self.neutral_positions
         
         for position in all_positions:
-            if not position['token_pair'] or not position['min_range'] or not position['max_range']:
+            if not position['token_pair']:
                 continue
                 
             pair = position['token_pair'].replace(' ', '')
             if '/' in pair:
-                base_token = pair.split('/')[0].upper()
+                current_price = self._calculate_pair_price(pair)
                 
-                if base_token in self.prices:
-                    current_price = self.prices[base_token]
+                if current_price is not None:
                     position['current_price'] = current_price
                     
-                    if current_price < position['min_range']:
-                        position['range_status'] = 'out_of_range_low'
-                    elif current_price > position['max_range']:
-                        position['range_status'] = 'out_of_range_high'
+                    # Handle different position types
+                    if not position['min_range'] and position['max_range']:
+                        # Perpetual position: only has max range (liquidation/close level)
+                        if current_price > position['max_range']:
+                            position['range_status'] = 'perp_closed'  # Price above liquidation
+                        else:
+                            position['range_status'] = 'perp_active'  # Price within acceptable range
+                    elif not position['min_range'] or not position['max_range']:
+                        # Position without valid ranges
+                        position['range_status'] = 'no_range'
                     else:
-                        position['range_status'] = 'in_range'
+                        # Normal CLM position with both min and max ranges
+                        if current_price < position['min_range']:
+                            position['range_status'] = 'out_of_range_low'
+                        elif current_price > position['max_range']:
+                            position['range_status'] = 'out_of_range_high'
+                        else:
+                            position['range_status'] = 'in_range'
+    
+    def _calculate_pair_price(self, pair):
+        """Calculate the appropriate price for a token pair"""
+        if not pair:
+            return None
+            
+        # Handle single tokens (for perpetuals)
+        if '/' not in pair:
+            token = pair.upper()
+            return self.prices.get(token)
+        
+        tokens = pair.split('/')
+        if len(tokens) != 2:
+            return None
+            
+        base_token = tokens[0].upper()
+        quote_token = tokens[1].upper()
+        
+        # Special handling for specific pairs
+        if pair.upper() == 'JLP/SOL':
+            # JLP/SOL needs special calculation - JLP is a pool token with different pricing
+            jlp_price = self.prices.get('JLP')
+            sol_price = self.prices.get('SOL')
+            
+            if jlp_price and sol_price and sol_price > 0:
+                # JLP price is in USD, we want SOL per JLP
+                # So: JLP_USD_price / SOL_USD_price = SOL per JLP
+                sol_per_jlp = jlp_price / sol_price
+                return sol_per_jlp
+        
+        elif pair.upper() in ['WBTC/SOL', 'CBBTC/SOL', 'WHETH/SOL']:
+            # For BTC/SOL and ETH/SOL pairs, calculate ratio
+            btc_tokens = ['WBTC', 'CBBTC']
+            eth_tokens = ['WHETH', 'WHETF']
+            
+            if base_token in btc_tokens:
+                # Use BTC price for wrapped BTC tokens
+                btc_price = self.prices.get('BTC')
+                sol_price = self.prices.get('SOL')
+                if btc_price and sol_price and sol_price > 0:
+                    return btc_price / sol_price
+            elif base_token in eth_tokens:
+                # Use ETH price for wrapped ETH tokens
+                eth_price = self.prices.get('ETH')
+                sol_price = self.prices.get('SOL')
+                if eth_price and sol_price and sol_price > 0:
+                    return eth_price / sol_price
+        
+        # Default behavior: use base token price directly
+        if base_token in self.prices:
+            return self.prices[base_token]
+            
+        return None
     
     def refresh_prices_and_status(self):
         """Convenience method to refresh all price data"""

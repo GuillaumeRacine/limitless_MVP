@@ -11,6 +11,8 @@ from views.active_positions import ActivePositionsView
 from views.transactions import TransactionsView
 from views.historical_returns import HistoricalReturnsView
 from views.allocation_breakdown import AllocationBreakdownView
+from views.prices import PricesView
+from views.historical_performance import HistoricalPerformanceView
 
 class CLMTracker:
     def __init__(self):
@@ -19,6 +21,8 @@ class CLMTracker:
         self.transactions_view = TransactionsView(self.data_manager)
         self.historical_view = HistoricalReturnsView(self.data_manager)
         self.breakdown_view = AllocationBreakdownView(self.data_manager)
+        self.prices_view = PricesView(self.data_manager)
+        self.historical_performance_view = HistoricalPerformanceView(self.data_manager)
         
     def run_cli(self):
         """Main CLI loop"""
@@ -32,7 +36,7 @@ class CLMTracker:
             
             # Show menu
             print(f"\n{'='*120}")
-            print("📋 Main Views: [1] Active Positions  [2] Transactions  [3] Historical Returns  [4] Allocation Breakdown")
+            print("📋 Main Views: [1] Active Positions  [2] Transactions  [3] Historical Returns  [4] Allocation Breakdown  [5] Prices  [6] Token Performance")
             print("🔍 Strategy Details: [L] Long Strategy  [N] Neutral Strategy")
             print("🔧 Actions: [r]efresh | [q]uit")
             print("="*120)
@@ -65,11 +69,19 @@ class CLMTracker:
                     print("\033[2J\033[H")
                     self.breakdown_view.display()
                     input("\nPress Enter to return...")
+                elif choice in ['5', 'prices', 'pricing']:
+                    print("\033[2J\033[H")
+                    self.prices_view.display()
+                    input("\nPress Enter to return...")
+                elif choice in ['6', 'performance', 'token performance', 'historical performance']:
+                    print("\033[2J\033[H")
+                    self.historical_performance_view.display()
+                    input("\nPress Enter to return...")
                 elif choice in ['r', 'refresh']:
                     print("🔄 Refreshing data...")
                     continue
                 else:
-                    print("❌ Invalid choice. Use 1, 2, 3, 4, L, N, r, or q")
+                    print("❌ Invalid choice. Use 1, 2, 3, 4, 5, 6, L, N, r, or q")
                     sleep(1)
                     
             except KeyboardInterrupt:
