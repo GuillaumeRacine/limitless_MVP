@@ -1,0 +1,10 @@
+Position Details,Strategy,Wallet,Chain,Platform,Total Entry Value,Entry Date,Days #,Min Range,Max Range,Exit Date,Exit Value,Claimed Yield Value,Claimed Yield Return,Price Return,IL,Transaction Fees,Slippage,Yield APR,Net Return
+Data format,,,text,text,$USD,Month/Day,,$USD,$USD,Month/Day,$USD,$USD,,,%,%,%,,%
+How to get the data,,,[screenshot],[screenshot],Token A Entry Value + Token B Entry Value,[screenshot],,[screenshot],[screenshot],[screenshot],[screenshot],[screenshot],,,Estimated permanent loss in % compared to holding token A and B in a 50/50 split for the same length as a CLM position where I enter at 50/50 for each token. ,"Actual fees paid for all transactions (trading tokens, entering a CLM position, claimed yield, close position, etc - all combined as % of entry value","The actual % of slippage for all token conversions: swapping the tokens and then swapping the pair for a CLM token, etc. - combined as a % of entry value. ",,Time-adjusted annual APR for both price and yield return components based on entry value in $CAD
+JLP / SOL,Long,DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k,Sol,Orca,"$22,509",June 20,3,0.0264,0.032,,,,,,,,,,
+WBTC / SOL,Long,DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k,Sol,Orca,"$17,754",June 20,3,628,767,,,,,,,,,,
+cbBTC / SOL,Long,DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k,Sol,Orca,"$15,874",June 20,3,628,768,,,,,,,,,,
+whETH / SOL,Long,DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k,Sol,Orca,"$1,479",June 20,3,14.7,17.9,,,,,,,,,,
+ETH / USDC,Long,0x811c7733b0e283051b3639c529eeb17784f9b19d275a7c368a3979f509ea519a,Sui,Cetus,"$29,432",June 20,3,2106,2913,,,,,,,,,,
+SOL / USDC,Long,DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k,Sol,Ray,"$20,358",June 20,3,128.2,156.7,,,,,,,,,,
+WETH / USDC,Long,0x52Ad60E77D2CAb7EdDCafC1f169Af354f2b1508a,Base,Aero,"$32,839",June 20,3,1848,3367,,,,,,,,,,
