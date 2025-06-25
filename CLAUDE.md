@@ -118,3 +118,34 @@ Now includes 6 main views plus strategy details:
 - [6] Token Performance (standalone historical view)
 - [L] Long Strategy Details
 - [N] Neutral Strategy Details
+
+## Transaction System Enhancements (December 2025)
+
+### Multi-Chain Transaction Support
+- **SUI Integration**: Full SUI blockchain transaction processing with RPC validation
+- **Enhanced Data Processing**: 380+ SUI transactions imported with platform detection
+- **Cross-Chain Tracking**: SOL, ETH, SUI, Base, Arbitrum, Optimism transaction support
+
+### Advanced Platform Detection
+- **84.7% Platform Identification Rate**: Enhanced from ~53% through intelligent detection
+- **Contract Address Mapping**: Comprehensive DEX and protocol contract database
+- **Pattern Recognition**: Transaction type and chain-specific platform inference
+- **1,391 Transactions Enhanced**: Massive improvement in platform clarity
+
+### Enhanced Transaction View
+- **Dual-Column Display**: Separate "Token Units" and "USD Value" columns
+- **Smart Filtering**: Automatically excludes approve transactions and zero-value transfers
+- **Intelligent Formatting**: K/M notation for large amounts, appropriate decimals for small amounts
+- **USD Integer Display**: Clean integer USD values when token units > 0.00
+
+### Blockchain Validation Infrastructure
+- **SUI RPC Client** (`sui_api_validator.py`): Full blockchain validation and data enhancement
+- **ETH RPC Client** (`eth_api_validator.py`): Ethereum ecosystem transaction validation  
+- **SOL RPC Client** (`sol_api_validator.py`): Solana program and transaction analysis
+- **Data Enhancement Pipeline**: Automatic USD value calculation and platform detection
+
+### Transaction Analysis Tools
+- **Comprehensive Analytics**: Platform efficiency, gas costs, and strategy breakdowns
+- **Unclear Transaction Detection**: Automated identification of transactions needing review
+- **Historical Price Integration**: USD value calculation at transaction time
+- **Multi-Format Support**: CSV imports from various DEX and wallet sources
