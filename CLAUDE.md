@@ -8,17 +8,23 @@ CLM Portfolio Tracker is a Python CLI application for monitoring cryptocurrency 
 
 ## Architecture
 
-The application follows a modular MVC-like pattern:
+The application follows a clean modular MVC-like pattern:
 
+### Core Application
 - **`CLM.py`** - Main CLI controller with interactive menu system
-- **`clm_data.py`** - Data manager handling CSV imports, JSON persistence, and price fetching
-- **`views/`** - Display modules for different data views:
-  - `active_positions.py` - Live position monitoring with range status and integrated token performance
-  - `allocation_breakdown.py` - Portfolio allocation analysis
-  - `historical_returns.py` - Performance tracking
-  - `historical_performance.py` - Multi-timeframe token performance analysis
-  - `prices.py` - Real-time pricing dashboard with FX rates
-  - `transactions.py` - Transaction history
+- **`clm_data.py`** - Core data manager handling CSV imports, JSON persistence, and price fetching
+
+### Views (Display Layer)
+- **`views/active_positions.py`** - Live position monitoring with range status and integrated token performance
+- **`views/allocation_breakdown.py`** - Portfolio allocation analysis
+- **`views/historical_returns.py`** - Performance tracking
+- **`views/historical_performance.py`** - Multi-timeframe token performance analysis
+- **`views/prices.py`** - Real-time pricing dashboard with FX rates
+- **`views/transactions.py`** - Transaction history
+
+### Utilities (Shared Components)
+- **`utils/formatting.py`** - Shared formatting utilities (currency, percentages, numbers)
+- **`utils/calculations.py`** - Common calculation functions (totals, averages, allocations)
 
 ## Key Data Flow
 
