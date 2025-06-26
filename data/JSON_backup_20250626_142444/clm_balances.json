@@ -1,5 +1,71 @@
 [
   {
+    "id": "cdb45ccad88d",
+    "wallet": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+    "chain": "SOL",
+    "platform": "Orca",
+    "token_pair": "SOL/USDC",
+    "lp_balance": 1250.75,
+    "token_a_balance": 625.0,
+    "token_b_balance": 625.75,
+    "contract_address": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP",
+    "snapshot_date": "2025-06-24T17:29:59.962048",
+    "raw_data": {
+      "Wallet Address": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+      "Chain": "SOL",
+      "Platform": "Orca",
+      "Token Pair": "SOL/USDC",
+      "Current Balance": 1250.75,
+      "Token A Balance": 625.0,
+      "Token B Balance": 625.75,
+      "Contract Address": "9W959DqEETiGZocYWCQPaJ6sBmUzgfxXfqGeTEdp3aQP"
+    }
+  },
+  {
+    "id": "d27ba22048e0",
+    "wallet": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+    "chain": "SOL",
+    "platform": "Raydium",
+    "token_pair": "RAY/USDC",
+    "lp_balance": 500.25,
+    "token_a_balance": 250.0,
+    "token_b_balance": 250.25,
+    "contract_address": "AVs9TA4nWDzfPJE9gqub6T2b5s4w3XP9VUj8Xa6u8MaY",
+    "snapshot_date": "2025-06-24T17:29:59.962104",
+    "raw_data": {
+      "Wallet Address": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+      "Chain": "SOL",
+      "Platform": "Raydium",
+      "Token Pair": "RAY/USDC",
+      "Current Balance": 500.25,
+      "Token A Balance": 250.0,
+      "Token B Balance": 250.25,
+      "Contract Address": "AVs9TA4nWDzfPJE9gqub6T2b5s4w3XP9VUj8Xa6u8MaY"
+    }
+  },
+  {
+    "id": "0311664e97e7",
+    "wallet": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+    "chain": "SOL",
+    "platform": "Jupiter",
+    "token_pair": "JLP/SOL",
+    "lp_balance": 25.5,
+    "token_a_balance": 12.75,
+    "token_b_balance": 12.75,
+    "contract_address": "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4",
+    "snapshot_date": "2025-06-24T17:29:59.962152",
+    "raw_data": {
+      "Wallet Address": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+      "Chain": "SOL",
+      "Platform": "Jupiter",
+      "Token Pair": "JLP/SOL",
+      "Current Balance": 25.5,
+      "Token A Balance": 12.75,
+      "Token B Balance": 12.75,
+      "Contract Address": "27G8MtK7VtTcCHkpASjSDdkWWYfoqT6ggEuKidVJidD4"
+    }
+  },
+  {
     "id": "39e84c963d61",
     "wallet": "",
     "chain": "Unknown",
@@ -9,7 +75,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.689928",
+    "snapshot_date": "2025-06-24T17:29:59.963151",
     "raw_data": {
       "RANK": 7,
       "ICON": "https://static.coinstats.app/coins/1650455825065.png",
@@ -46,7 +112,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690000",
+    "snapshot_date": "2025-06-24T17:29:59.963230",
     "raw_data": {
       "RANK": 6,
       "ICON": "https://static.coinstats.app/coins/1701234596791.png",
@@ -83,7 +149,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690063",
+    "snapshot_date": "2025-06-24T17:29:59.963293",
     "raw_data": {
       "RANK": 1495,
       "ICON": "https://static.coinstats.app/coins/coinbase-wrapped-btcZYG.png",
@@ -120,7 +186,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690121",
+    "snapshot_date": "2025-06-24T17:29:59.963359",
     "raw_data": {
       "RANK": 124,
       "ICON": "https://static.coinstats.app/coins/raydiumHdy.png",
@@ -157,7 +223,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690182",
+    "snapshot_date": "2025-06-24T17:29:59.963419",
     "raw_data": {
       "RANK": 10479,
       "ICON": "https://static.coinstats.app/coins/jupiter-perpetuals-liquidity-provider-token5QX.png",
@@ -194,7 +260,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690239",
+    "snapshot_date": "2025-06-24T17:29:59.963475",
     "raw_data": {
       "RANK": 10510,
       "ICON": "https://static.coinstats.app/coins/ethereum-wormholetCM.png",
@@ -231,7 +297,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690297",
+    "snapshot_date": "2025-06-24T17:29:59.963532",
     "raw_data": {
       "RANK": 3,
       "ICON": "https://static.coinstats.app/coins/1650455771843.png",
@@ -268,7 +334,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690357",
+    "snapshot_date": "2025-06-24T17:29:59.963605",
     "raw_data": {
       "RANK": 10487,
       "ICON": "https://static.coinstats.app/coins/wrapped-btc-wormholediM.png",
@@ -305,7 +371,7 @@
     "token_a_balance": null,
     "token_b_balance": null,
     "contract_address": "",
-    "snapshot_date": "2025-06-26T14:27:05.690412",
+    "snapshot_date": "2025-06-24T17:29:59.963693",
     "raw_data": {
       "RANK": 10464,
       "ICON": "https://static.coinstats.app/coins/wrapped-solanaG8Q.png",

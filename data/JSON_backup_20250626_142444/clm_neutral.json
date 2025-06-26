@@ -26,7 +26,7 @@
     "is_active": true,
     "current_price": null,
     "range_status": "unknown",
-    "last_updated": "2025-06-26T14:27:08.869128",
+    "last_updated": "2025-06-24T17:29:59.894195",
     "transaction_data": {
       "entry_tx_id": "",
       "exit_tx_id": "",
@@ -70,7 +70,7 @@
     "is_active": true,
     "current_price": null,
     "range_status": "unknown",
-    "last_updated": "2025-06-26T14:27:08.869233",
+    "last_updated": "2025-06-24T17:29:59.894293",
     "transaction_data": {
       "entry_tx_id": "",
       "exit_tx_id": "",
@@ -114,7 +114,7 @@
     "is_active": true,
     "current_price": null,
     "range_status": "unknown",
-    "last_updated": "2025-06-26T14:27:08.869320",
+    "last_updated": "2025-06-24T17:29:59.894377",
     "transaction_data": {
       "entry_tx_id": "",
       "exit_tx_id": "",
@@ -158,7 +158,51 @@
     "is_active": true,
     "current_price": null,
     "range_status": "unknown",
-    "last_updated": "2025-06-26T14:27:08.869400",
+    "last_updated": "2025-06-24T17:29:59.894452",
+    "transaction_data": {
+      "entry_tx_id": "",
+      "exit_tx_id": "",
+      "gas_fees_paid": null,
+      "block_number": ""
+    },
+    "contract_data": {
+      "contract_address": "",
+      "pool_address": ""
+    },
+    "balance_data": {
+      "current_lp_balance": null,
+      "token_a_balance": null,
+      "token_b_balance": null
+    }
+  },
+  {
+    "id": "8afb25594762",
+    "position_details": "Bridge",
+    "strategy": "neutral",
+    "platform": "Unknown",
+    "token_pair": "Bridge",
+    "chain": "Unknown",
+    "wallet": "Unknown",
+    "entry_value": null,
+    "entry_date": "Thu, 08 May 2025 19:30:56 UTC",
+    "days_active": null,
+    "min_range": null,
+    "max_range": null,
+    "exit_date": null,
+    "exit_value": null,
+    "claimed_yield_value": null,
+    "claimed_yield_return": null,
+    "price_return": null,
+    "impermanent_loss": null,
+    "transaction_fees": null,
+    "slippage": null,
+    "yield_apr": null,
+    "net_return": null,
+    "status": "open",
+    "is_active": true,
+    "current_price": null,
+    "range_status": "unknown",
+    "last_updated": "2025-06-25T13:22:10.484475",
     "transaction_data": {
       "entry_tx_id": "",
       "exit_tx_id": "",
