@@ -1,20 +1,21 @@
 # CLM Portfolio Tracker
 
-A Python-based CLI application for monitoring cryptocurrency liquidity mining (CLM) positions across various DeFi protocols. Track position ranges, live prices, performance metrics, and portfolio allocation in real-time.
+A streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions across DeFi protocols. Features automatic 60-minute price refresh, real-time position tracking, and comprehensive portfolio analysis.
 
 ## Project Overview
 
 The CLM Portfolio Tracker helps cryptocurrency traders monitor their liquidity mining positions by:
-- Importing position data from CSV files
-- Fetching live token prices from multiple APIs
-- Displaying visual range indicators for position status
-- Calculating returns, fees, and performance metrics
-- Providing portfolio allocation analysis
+- **Auto-refresh**: Automatic price updates every 60 minutes while running
+- **CSV Import**: Direct import of position data from trading sheets
+- **Multi-API Pricing**: Live prices from DefiLlama, CoinGecko, and FX APIs
+- **Visual Indicators**: Range sliders showing position status at a glance
+- **Portfolio Analysis**: Returns, fees, performance metrics, and allocation breakdowns
 
 ## Features
 
 ### 🎯 Position Monitoring
-- **Strategy Split View**: Separate tracking for Long and Neutral strategies
+- **Auto-Refresh**: 60-minute automatic price updates with countdown timer
+- **Strategy Split View**: Separate tracking for Long and Neutral strategies  
 - **Range Visualization**: Visual sliders showing current price vs min/max ranges
 - **Status Indicators**: Immediate feedback on in-range vs out-of-range positions
 - **Live Price Integration**: Real-time prices from DefiLlama and CoinGecko APIs

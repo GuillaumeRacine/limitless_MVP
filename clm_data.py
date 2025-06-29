@@ -9,6 +9,7 @@ import os
 from datetime import datetime
 import hashlib
 import requests
+from typing import Dict, List, Any
 
 class CLMDataManager:
     def __init__(self):
@@ -744,6 +745,7 @@ class CLMDataManager:
         self.load_existing_positions()
         total_active = len(self.long_positions) + len(self.neutral_positions)
         print(f"📊 Loaded {total_active} active positions ({len(self.long_positions)} long, {len(self.neutral_positions)} neutral) + {len(self.closed_positions)} closed")
+    
     
     def get_token_prices(self):
         """Fetch current prices for tokens using DefiLlama + CoinGecko"""
