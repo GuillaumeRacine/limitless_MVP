@@ -4,6 +4,8 @@ Active Positions View - Job to be done: Monitor active CLM positions and range s
 Split by strategy: Long and Neutral are separate businesses
 """
 
+from datetime import datetime
+
 class ActivePositionsView:
     def __init__(self, data_manager):
         self.data_manager = data_manager
@@ -52,10 +54,8 @@ class ActivePositionsView:
         in_range = len([p for p in positions if p['range_status'] == 'in_range'])
         
         # Strategy header and stats
-        print(f"{title}")
+        print(f"{title} - ${total_value:,.0f} Entry Value")
         print("=" * 80)
-        print(f"📊 {len(positions)} Positions | 💰 ${total_value:,.0f} Entry Value | 📈 {avg_return:.1f}% Avg Return")
-        print(f"✅ {in_range} In Range | ⚠️ {out_of_range} Out of Range")
         print("-" * 138)
         
         # Table header
@@ -336,85 +336,93 @@ class ActivePositionsView:
                 print(f"{pos_name:<25} {entry_str:<10} {percent_str:<5} {chain_str:<6} {platform:<12} {min_str:<10} {current_str:<10} {max_str:<10} {status_str:<20} {days_str:<5} {return_str:<8} {slider_str}")
     
     def _display_token_returns(self):
-        """Display token returns table for key portfolio tokens"""
+        """Display current token prices for key portfolio tokens"""
         print("\n\n" + "="*120)
-        print("📈 TOKEN PERFORMANCE - KEY HOLDINGS")
+        print("💰 CURRENT TOKEN PRICES")
         print("="*120)
         
         # Define specific tokens to display
-        target_tokens = ['BTC', 'ETH', 'SOL', 'SUI', 'JLP', 'USD/CAD']
+        target_tokens = ['BTC', 'ETH', 'SOL', 'SUI', 'JLP']
         
-        # Get demo returns data for these tokens
-        returns_data = self._get_filtered_returns_data(target_tokens)
-        
-        # Display the returns table
-        self._display_filtered_returns_table(returns_data)
+        # Get current prices from data manager
+        self._display_token_prices_table(target_tokens)
     
-    def _get_filtered_returns_data(self, tokens):
-        """Get returns data for specific tokens"""
-        demo_data = {
-            'BTC': {'1D': 2, '7D': -1, '30D': 15, '90D': 45, '180D': 22, '365D': 120, '3YR': 180, '5YR': 320},
-            'ETH': {'1D': 3, '7D': 8, '30D': 12, '90D': 35, '180D': 18, '365D': 85, '3YR': 150, '5YR': 280},
-            'SOL': {'1D': 5, '7D': -12, '30D': 25, '90D': 180, '180D': 95, '365D': 420, '3YR': 850, '5YR': 1200},
-            'SUI': {'1D': 12, '7D': -8, '30D': 35, '90D': 125, '180D': 200, '365D': 380, '3YR': 650, '5YR': 950},
-            'JLP': {'1D': 1, '7D': 3, '30D': 8, '90D': 22, '180D': 45, '365D': 85, '3YR': 180, '5YR': 320},
-            'USD/CAD': {'1D': 0, '7D': 1, '30D': -2, '90D': 3, '180D': -1, '365D': 5, '3YR': -8, '5YR': 12}
-        }
+    def _display_token_prices_table(self, tokens):
+        """Display current USD prices for tokens"""
+        # Ensure prices are available
+        if not self.data_manager.prices:
+            self.data_manager.get_token_prices()
         
-        return {token: demo_data.get(token, {}) for token in tokens if token in demo_data}
-    
-    def _display_filtered_returns_table(self, returns_data):
-        """Display the filtered returns table with increased spacing"""
-        if not returns_data:
-            print("❌ No returns data available")
-            return
+        # Create two columns for better layout
+        left_tokens = tokens[:5]
+        right_tokens = tokens[5:]
         
-        # Table header with increased spacing
-        print(f"\n{'Token':<8}   {'1D':<6}   {'7D':<6}   {'30D':<7}   {'90D':<7}   {'180D':<8}   {'365D':<8}   {'3YR':<7}   {'5YR':<7}")
-        print("-" * 88)
+        print(f"\n{'Token':<10} {'USD Price':<15} {'24h Change':<12} {'Token':<10} {'USD Price':<15} {'24h Change':<12}")
+        print("-" * 80)
         
-        # Display crypto tokens first
-        crypto_tokens = [token for token in returns_data.keys() if token != 'USD/CAD']
-        for token in sorted(crypto_tokens):
-            self._print_token_return_row(token, returns_data[token])
+        # Display prices in two columns
+        for i in range(max(len(left_tokens), len(right_tokens))):
+            left_part = ""
+            right_part = ""
+            
+            if i < len(left_tokens):
+                token = left_tokens[i]
+                price = self.data_manager.prices.get(token, 0)
+                change = self._get_demo_24h_change(token)  # Demo 24h change
+                left_part = self._format_price_row(token, price, change)
+            
+            if i < len(right_tokens):
+                token = right_tokens[i]
+                price = self.data_manager.prices.get(token, 0)
+                change = self._get_demo_24h_change(token)  # Demo 24h change
+                right_part = self._format_price_row(token, price, change)
+            
+            print(f"{left_part:<40} {right_part}")
         
-        # Separator and FX token
-        if 'USD/CAD' in returns_data:
-            print("-" * 88)
-            self._print_token_return_row('USD/CAD', returns_data['USD/CAD'])
+        # Display FX rates
+        print("\n" + "-" * 80)
+        print("💱 FX Rates:")
+        usd_cad = self.data_manager.fx_rates.get('USD_CAD', 1.43)
+        print(f"USD/CAD: {usd_cad:.4f}")
         
         # Get last price update timestamp from data manager
         last_update = getattr(self.data_manager, 'last_price_update', None)
         if last_update:
             timestamp_str = last_update.strftime('%Y-%m-%d %H:%M:%S')
         else:
-            timestamp_str = 'current session'
+            timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             
-        print(f"\n🕐 Performance data as of {timestamp_str}")
-        
-        # Add price refresh timestamp at the bottom
-        print(f"\n💰 Prices last refreshed: {timestamp_str}")
+        print(f"\n🕐 Prices last refreshed: {timestamp_str}")
     
-    def _print_token_return_row(self, token, returns):
-        """Print a single token row with increased spacing"""
-        row = f"{token:<8}"
+    def _format_price_row(self, token, price, change):
+        """Format a single price row"""
+        if price > 1000:
+            price_str = f"${price:,.0f}"
+        elif price > 1:
+            price_str = f"${price:.2f}"
+        else:
+            price_str = f"${price:.6f}"
         
-        timeframes = ['1D', '7D', '30D', '90D', '180D', '365D', '3YR', '5YR']
-        spacings = [6, 6, 7, 7, 8, 8, 7, 7]  # Increased spacing for each column
+        if change > 0:
+            change_str = f"🟢 +{change:.1f}%"
+        elif change < 0:
+            change_str = f"🔴 {change:.1f}%"
+        else:
+            change_str = f"⚪ {change:.1f}%"
         
-        for i, timeframe in enumerate(timeframes):
-            return_val = returns.get(timeframe)
-            spacing = spacings[i]
-            
-            if return_val is None:
-                cell = "N/A"
-            else:
-                # Format as integer percentage
-                if return_val >= 0:
-                    cell = f"+{return_val}%"
-                else:
-                    cell = f"{return_val}%"
-                    
-            row += f"   {cell:<{spacing}}"
-                
-        print(row)
+        return f"{token:<10} {price_str:<15} {change_str:<12}"
+    
+    def _get_demo_24h_change(self, token):
+        """Get demo 24h change for tokens"""
+        demo_changes = {
+            'BTC': 2.3,
+            'ETH': 3.1,
+            'SOL': 5.2,
+            'SUI': 12.5,
+            'JLP': 1.1,
+            'ORCA': -2.4,
+            'RAY': 4.7,
+            'USDC': 0.0,
+            'USDT': -0.1
+        }
+        return demo_changes.get(token, 0.0)

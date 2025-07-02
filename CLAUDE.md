@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CLM Portfolio Tracker is a Python CLI application for monitoring cryptocurrency liquidity mining positions. It tracks both Long and Neutral strategy positions across various platforms and tokens.
+CLM Portfolio Tracker is a streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions with real-time price tracking and AI-powered market analysis. It tracks Long and Neutral strategy positions across multiple chains and platforms through CSV import and 60-minute auto-refresh cycles.
 
 ## Architecture
 
@@ -115,13 +115,14 @@ When adding new features, ensure they follow the existing pattern of separating 
 - **Real-time Timestamps**: Price refresh timestamps shown at bottom of displays
 
 ### CLI Menu System
-Now includes 6 main views plus strategy details:
-- [1] Active Positions (with integrated token performance)
+Includes 7 main views plus strategy details and natural language querying:
+- [1] Active Positions (with integrated token prices)
 - [2] Transactions
 - [3] Historical Returns  
 - [4] Allocation Breakdown
 - [5] Prices (real-time dashboard)
 - [6] Token Performance (standalone historical view)
+- [7] DefiLlama Dashboard (with AI-powered natural language queries)
 - [L] Long Strategy Details
 - [N] Neutral Strategy Details
 
@@ -155,3 +156,4 @@ Now includes 6 main views plus strategy details:
 - **Unclear Transaction Detection**: Automated identification of transactions needing review
 - **Historical Price Integration**: USD value calculation at transaction time
 - **Multi-Format Support**: CSV imports from various DEX and wallet sources
+

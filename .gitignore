@@ -1,1 +1,27 @@
-credentials/
+# Python
+__pycache__/
+*.py[cod]
+*.class
+
+# Environment variables
+.env
+.venv
+env/
+venv/
+
+# Credentials and sensitive data
+credentials.json
+*.key
+*.pem
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log

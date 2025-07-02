@@ -1,1 +1,94 @@
-[]
+[
+  {
+    "id": "bddb2d6dc4a3",
+    "position_details": "CLM | SOL + USD",
+    "strategy": "neutral",
+    "platform": "CLM",
+    "token_pair": "SOL/USDC",
+    "chain": "SOL",
+    "wallet": "Djrzp7SyiTsDre41hgaUCh99Aw7PrchetGDbdm3GfHo6",
+    "entry_value": 23190.0,
+    "entry_date": "Jun 20",
+    "days_active": 3.0,
+    "min_range": 130.0,
+    "max_range": 158.75,
+    "exit_date": "2025-06-30",
+    "exit_value": 21104.77,
+    "claimed_yield_value": 675.304,
+    "claimed_yield_return": 2.912048296679603,
+    "price_return": -8.991936179387665,
+    "impermanent_loss": null,
+    "transaction_fees": null,
+    "slippage": null,
+    "yield_apr": 354.2992094293517,
+    "net_return": -6.079887882708062,
+    "status": "closed",
+    "is_active": false,
+    "current_price": null,
+    "range_status": "unknown",
+    "last_updated": "2025-06-26T14:27:08.869128",
+    "transaction_data": {
+      "entry_tx_id": "",
+      "exit_tx_id": "",
+      "gas_fees_paid": null,
+      "block_number": ""
+    },
+    "contract_data": {
+      "contract_address": "",
+      "pool_address": ""
+    },
+    "balance_data": {
+      "current_lp_balance": null,
+      "token_a_balance": null,
+      "token_b_balance": null
+    },
+    "final_price": 156.6799,
+    "was_in_range": true,
+    "yield_extracted_from_screenshot": true,
+    "yield_extraction_date": "2025-06-30T15:04:20.610367"
+  },
+  {
+    "id": "6c4d554de1e8",
+    "position_details": "SOL / USDC",
+    "strategy": "long",
+    "platform": "Ray",
+    "token_pair": "SOL / USDC",
+    "chain": "Sol",
+    "wallet": "DKGQ3gqfq2DpwkKZyazjMY1c1vKjzoX1A9jFrhVnzA3k",
+    "entry_value": 20358.0,
+    "entry_date": "June 20",
+    "days_active": 10.0,
+    "min_range": 128.2,
+    "max_range": 156.7,
+    "exit_date": "June 30",
+    "exit_value": 21105.0,
+    "claimed_yield_value": 678.0,
+    "claimed_yield_return": 3.21,
+    "price_return": 3.67,
+    "impermanent_loss": 0.0,
+    "transaction_fees": 0.0,
+    "slippage": 0.0,
+    "yield_apr": 117.3,
+    "net_return": 6.88,
+    "status": "closed",
+    "is_active": false,
+    "current_price": null,
+    "range_status": "unknown",
+    "last_updated": "2025-07-01T19:54:59.683703",
+    "transaction_data": {
+      "entry_tx_id": "",
+      "exit_tx_id": "",
+      "gas_fees_paid": null,
+      "block_number": ""
+    },
+    "contract_data": {
+      "contract_address": "",
+      "pool_address": ""
+    },
+    "balance_data": {
+      "current_lp_balance": null,
+      "token_a_balance": null,
+      "token_b_balance": null
+    }
+  }
+]

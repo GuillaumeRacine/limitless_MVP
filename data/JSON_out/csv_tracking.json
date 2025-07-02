@@ -1,8 +1,8 @@
 {
   "processed_files": {
     "data/Tokens_Trade_Sheet - Long Positions.csv": {
-      "hash": "6021f1abb221a8f759a63940d969744d",
-      "last_processed": "2025-06-26T14:27:05.479596",
+      "hash": "ec54b88199e84430e87444761e49498c",
+      "last_processed": "2025-06-30T12:26:58.530647",
       "file_type": "positions_long"
     },
     "data/Tokens_Trade_Sheet - Neutral Positions.csv": {
@@ -49,7 +49,17 @@
       "hash": "4c845691b570c4f9c845a5c1eeee8b88",
       "last_processed": "2025-06-26T14:27:05.690434",
       "file_type": "balances"
+    },
+    "data/Tokens_Trade_Sheet - Long Positions (2).csv": {
+      "hash": "b2eca72151165f35bd613b155e44c7c1",
+      "last_processed": "2025-07-01T19:54:59.683867",
+      "file_type": "positions_long"
+    },
+    "data/Tokens_Trade_Sheet - Neutral Positions (2).csv": {
+      "hash": "54557553ae42124446befcafeeb882ad",
+      "last_processed": "2025-07-01T19:54:59.686292",
+      "file_type": "positions_neutral"
     }
   },
-  "last_scan": "2025-06-27T17:24:54.830242"
+  "last_scan": "2025-07-02T13:16:16.090150"
 }

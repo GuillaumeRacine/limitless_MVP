@@ -5,8 +5,16 @@ CLM Portfolio Tracker - Main CLI Controller
 
 import sys
 import os
+import pandas as pd
 from time import sleep
 from datetime import datetime, timedelta
+
+# Load environment variables
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 from clm_data import CLMDataManager
 from views.active_positions import ActivePositionsView
 from views.transactions import TransactionsView
@@ -14,6 +22,7 @@ from views.historical_returns import HistoricalReturnsView
 from views.allocation_breakdown import AllocationBreakdownView
 from views.prices import PricesView
 from views.historical_performance import HistoricalPerformanceView
+from views.market_analysis import MarketAnalysisView
 
 class CLMTracker:
     def __init__(self):
@@ -24,6 +33,7 @@ class CLMTracker:
         self.breakdown_view = AllocationBreakdownView(self.data_manager)
         self.prices_view = PricesView(self.data_manager)
         self.historical_performance_view = HistoricalPerformanceView(self.data_manager)
+        self.market_analysis_view = MarketAnalysisView()
         self.last_auto_refresh = datetime.now()  # Track time of last auto-refresh
         
     def run_cli(self):
@@ -49,9 +59,10 @@ class CLMTracker:
             # Show menu
             print(f"\n{'='*120}")
             print("📋 Main Views: [1] Active Positions  [2] Transactions  [3] Historical Returns  [4] Allocation Breakdown  [5] Prices  [6] Token Performance")
+            print("📊 Market Analysis: [7] DefiLlama Dashboard")
             print("🔍 Strategy Details: [L] Long Strategy  [N] Neutral Strategy")
             
-            print("🔧 Actions: [r]efresh | [i]mport transactions | [A]sk about transactions | [q]uit")
+            print("🔧 Actions: [r]efresh | [i]mport transactions | [q]uit")
             
             # Show time until next auto-refresh
             time_until_refresh = timedelta(minutes=60) - (datetime.now() - self.last_auto_refresh)
@@ -97,6 +108,10 @@ class CLMTracker:
                     print("\033[2J\033[H")
                     self.historical_performance_view.display()
                     input("\nPress Enter to return...")
+                elif choice in ['7', 'market', 'defillama', 'market analysis']:
+                    print("\033[2J\033[H")
+                    self.market_analysis_view.display()
+                    input("\nPress Enter to return...")
                 elif choice in ['r', 'refresh']:
                     print("🔄 Refreshing data...")
                     self.last_auto_refresh = datetime.now()  # Reset auto-refresh timer
@@ -105,12 +120,8 @@ class CLMTracker:
                     print("\033[2J\033[H")
                     self.import_transactions_menu()
                     input("\nPress Enter to return...")
-                elif choice in ['a', 'ask']:
-                    print("\033[2J\033[H")
-                    self.transaction_query_menu()
-                    input("\nPress Enter to return...")
                 else:
-                    print("❌ Invalid choice. Use 1, 2, 3, 4, 5, 6, L, N, i, A, r, or q")
+                    print("❌ Invalid choice. Use 1, 2, 3, 4, 5, 6, 7, L, N, i, r, or q")
                     sleep(1)
                     
             except KeyboardInterrupt:
@@ -247,10 +258,6 @@ class CLMTracker:
         else:
             print("\n❌ No transactions imported from any file")
     
-    def transaction_query_menu(self):
-        """Interactive transaction query interface"""
-        print("❌ Transaction query functionality is currently disabled.")
-        print("💡 This feature will be restored in a future update.")
     
 
 def main():
@@ -303,7 +310,43 @@ def main():
             if os.path.exists(neutral_csv) and os.path.exists(long_csv):
                 if tracker.data_manager.check_for_updates(neutral_csv, long_csv):
                     print("🔄 Legacy CSV files changed, updating positions...")
-                    tracker.data_manager.update_positions(neutral_csv, long_csv)
+                    # Process legacy CSV files through the auto-detect system
+                    legacy_results = {
+                        'processed_data': {
+                            'positions': {'long': [], 'neutral': []},
+                            'transactions': [],
+                            'balances': []
+                        }
+                    }
+                    
+                    # Process neutral positions
+                    neutral_df = pd.read_csv(neutral_csv)
+                    neutral_df = tracker.data_manager.clean_csv_data(neutral_df)
+                    csv_format = tracker.data_manager.detect_csv_format(neutral_df)
+                    for _, row in neutral_df.iterrows():
+                        position = tracker.data_manager.parse_position(row, 'neutral', csv_format)
+                        legacy_results['processed_data']['positions']['neutral'].append(position)
+                    
+                    # Process long positions
+                    long_df = pd.read_csv(long_csv)
+                    long_df = tracker.data_manager.clean_csv_data(long_df)
+                    csv_format = tracker.data_manager.detect_csv_format(long_df)
+                    for _, row in long_df.iterrows():
+                        position = tracker.data_manager.parse_position(row, 'long', csv_format)
+                        legacy_results['processed_data']['positions']['long'].append(position)
+                    
+                    # Merge the data
+                    tracker.data_manager.merge_incremental_data(legacy_results['processed_data'])
+                    
+                    # Update metadata
+                    metadata = {
+                        "last_update": datetime.now().isoformat(),
+                        "neutral_csv_hash": tracker.data_manager.get_file_hash(neutral_csv),
+                        "long_csv_hash": tracker.data_manager.get_file_hash(long_csv),
+                        "neutral_csv_path": neutral_csv,
+                        "long_csv_path": long_csv
+                    }
+                    tracker.data_manager.save_metadata(metadata)
                 else:
                     print("✅ Loading existing data...")
                     tracker.data_manager.load_positions()

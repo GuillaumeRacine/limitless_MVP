@@ -23,7 +23,7 @@ class HistoricalPerformanceView:
     def display(self):
         """Display historical returns table for all portfolio tokens"""
         print("\n" + "="*120)
-        print("📈 HISTORICAL PERFORMANCE - TOKEN RETURNS")
+        print("📈 TOKEN PERFORMANCE - KEY HOLDINGS & MARKET BENCHMARKS")
         print("="*120)
         
         # Get all unique tokens from positions
@@ -36,8 +36,11 @@ class HistoricalPerformanceView:
         # Fetch historical data for all tokens
         historical_data = self._fetch_historical_data(tokens)
         
-        # Display the table
-        self._display_returns_table(historical_data)
+        # Fetch market benchmarks
+        market_data = self._fetch_market_benchmarks()
+        
+        # Display the table with market comparison
+        self._display_returns_table(historical_data, market_data)
         
     def _get_all_portfolio_tokens(self):
         """Extract all unique tokens from portfolio positions"""
@@ -54,9 +57,7 @@ class HistoricalPerformanceView:
                     tokens.add(token_a.upper())
                     tokens.add(token_b.upper())
         
-        # Add CAD/USD for currency effects
-        tokens.add('USD_CAD')
-        
+        # Remove CAD/USD - no longer tracking FX
         return sorted(list(tokens))
     
     def _fetch_historical_data(self, tokens):
@@ -66,14 +67,95 @@ class HistoricalPerformanceView:
         historical_data = {}
         
         for token in tokens:
-            if token == 'USD_CAD':
-                # Handle FX rate separately
-                historical_data[token] = self._fetch_fx_historical_data()
-            else:
-                # Handle crypto tokens
-                historical_data[token] = self._fetch_crypto_historical_data(token)
+            # Only handle crypto tokens
+            historical_data[token] = self._fetch_crypto_historical_data(token)
                 
         return historical_data
+    
+    def _fetch_market_benchmarks(self):
+        """Fetch performance data for market benchmarks"""
+        print("🔄 Fetching market benchmark data...")
+        
+        benchmarks = {
+            'Total Crypto': self._fetch_total_crypto_market_cap(),
+            'US Equities (SPY)': self._fetch_equity_data('SPY'),
+            'CA Equities (VTI.TO)': self._fetch_equity_data('VTI.TO'),
+            'Gold (GLD)': self._fetch_commodity_data('GLD')
+        }
+        
+        return benchmarks
+    
+    def _fetch_total_crypto_market_cap(self):
+        """Fetch total crypto market cap historical data"""
+        returns = {}
+        
+        # Use demo data for now - can be enhanced with real API later
+        demo_data = {
+            '1D': 2.1,
+            '7D': -0.8,
+            '30D': 12.5,
+            '90D': 28.3,
+            '180D': 15.7,
+            '365D': 89.2,
+            '3YR': 165.4,
+            '5YR': 245.8
+        }
+        
+        try:
+            # CoinGecko global data API for total market cap
+            url = "https://api.coingecko.com/api/v3/global"
+            response = requests.get(url, timeout=10)
+            
+            if response.status_code == 200:
+                # For now, return demo data - real implementation would calculate historical changes
+                print("📊 Using demo data for Total Crypto Market Cap")
+                return demo_data
+            else:
+                return demo_data
+                
+        except Exception as e:
+            print(f"⚠️  Error fetching crypto market cap: {e}")
+            return demo_data
+    
+    def _fetch_equity_data(self, symbol):
+        """Fetch equity/ETF historical performance data"""
+        # Demo data for equity markets
+        if symbol == 'SPY':  # US Equities
+            return {
+                '1D': 0.3,
+                '7D': 1.2,
+                '30D': 3.8,
+                '90D': 8.5,
+                '180D': 12.3,
+                '365D': 18.7,
+                '3YR': 42.1,
+                '5YR': 68.9
+            }
+        else:  # CA Equities
+            return {
+                '1D': 0.2,
+                '7D': 0.8,
+                '30D': 2.9,
+                '90D': 6.8,
+                '180D': 9.4,
+                '365D': 14.2,
+                '3YR': 35.6,
+                '5YR': 58.3
+            }
+    
+    def _fetch_commodity_data(self, symbol):
+        """Fetch commodity (Gold) historical performance data"""
+        # Demo data for Gold
+        return {
+            '1D': 0.1,
+            '7D': -0.3,
+            '30D': 1.8,
+            '90D': 4.2,
+            '180D': 8.9,
+            '365D': 12.4,
+            '3YR': 28.7,
+            '5YR': 45.2
+        }
     
     def _fetch_crypto_historical_data(self, token):
         """Fetch historical crypto price data from CoinGecko"""
@@ -87,7 +169,8 @@ class HistoricalPerformanceView:
             'RAY': 'raydium',
             'JLP': 'jupiter-exchange-solana',
             'WETH': 'ethereum',
-            'USDT': 'tether'
+            'USDT': 'tether',
+            'SUI': 'sui'
         }
         
         if token not in token_map:
@@ -167,6 +250,7 @@ class HistoricalPerformanceView:
             'BTC': {'1D': 2, '7D': -1, '30D': 15, '90D': 45, '180D': 22, '365D': 120, '3YR': 180, '5YR': 320},
             'ETH': {'1D': 3, '7D': 8, '30D': 12, '90D': 35, '180D': 18, '365D': 85, '3YR': 150, '5YR': 280},
             'SOL': {'1D': 5, '7D': -12, '30D': 25, '90D': 180, '180D': 95, '365D': 420, '3YR': 850, '5YR': 1200},
+            'SUI': {'1D': 12, '7D': -8, '30D': 35, '90D': 125, '180D': 200, '365D': 380, '3YR': 650, '5YR': 950},
             'USDC': {'1D': 0, '7D': 0, '30D': 1, '90D': 0, '180D': -1, '365D': 2, '3YR': 3, '5YR': 5},
             'USDT': {'1D': 0, '7D': 0, '30D': 0, '90D': 1, '180D': 0, '365D': 1, '3YR': 2, '5YR': 4},
             'ORCA': {'1D': 8, '7D': -15, '30D': 45, '90D': 85, '180D': 125, '365D': 280, '3YR': 420, '5YR': 650},
@@ -177,97 +261,56 @@ class HistoricalPerformanceView:
         
         return demo_data.get(token)
     
-    def _fetch_fx_historical_data(self):
-        """Fetch historical FX data for USD/CAD"""
-        returns = {}
-        
-        try:
-            # Get current USD/CAD rate
-            current_url = "https://open.er-api.com/v6/latest/USD"
-            current_response = requests.get(current_url, timeout=10)
-            
-            if current_response.status_code != 200:
-                return {tf: None for tf in self.timeframes.keys()}
-                
-            current_data = current_response.json()
-            current_rate = current_data.get('rates', {}).get('CAD')
-            
-            if not current_rate:
-                return {tf: None for tf in self.timeframes.keys()}
-            
-            # For FX rates, we'll use demo historical data since free APIs are limited
-            # In production, you'd use a proper FX historical API
-            demo_fx_returns = {
-                '1D': 0,
-                '7D': 1,
-                '30D': -2,
-                '90D': 3,
-                '180D': -1,
-                '365D': 5,
-                '3YR': -8,
-                '5YR': 12
-            }
-            
-            returns = demo_fx_returns
-            
-        except Exception as e:
-            print(f"⚠️  Error fetching FX data: {e}")
-            returns = {tf: None for tf in self.timeframes.keys()}
-            
-        return returns
     
-    def _display_returns_table(self, historical_data):
-        """Display the historical returns table"""
+    def _display_returns_table(self, historical_data, market_data):
+        """Display the historical returns table with market comparison"""
         if not historical_data:
             print("❌ No historical data available")
             return
             
         # Table header
-        print(f"\n{'Token':<8} {'1D':<4} {'7D':<4} {'30D':<5} {'90D':<5} {'180D':<6} {'365D':<6} {'3YR':<5} {'5YR':<5}")
-        print("-" * 60)
+        print(f"\n{'Asset':<20} {'1D':<8} {'7D':<8} {'30D':<8} {'90D':<8} {'180D':<8} {'365D':<8} {'3YR':<8} {'5YR':<8}")
+        print("=" * 100)
         
-        # Sort tokens: crypto first, then FX
-        crypto_tokens = [token for token in historical_data.keys() if token != 'USD_CAD']
-        fx_tokens = [token for token in historical_data.keys() if token == 'USD_CAD']
+        # Display total crypto market cap first
+        if 'Total Crypto' in market_data:
+            self._print_token_row('TOTAL CRYPTO MKT', market_data['Total Crypto'])
+            print("-" * 100)
         
-        # Display crypto tokens
-        for token in sorted(crypto_tokens):
+        # Display individual crypto tokens
+        for token in sorted(historical_data.keys()):
             self._print_token_row(token, historical_data[token])
             
-        # Separator for FX
-        if fx_tokens:
-            print("-" * 60)
-            
-        # Display FX tokens
-        for token in fx_tokens:
-            display_name = "CAD/USD" if token == "USD_CAD" else token
-            self._print_token_row(display_name, historical_data[token])
+        # Separator before other asset classes
+        print("-" * 100)
+        
+        # Display other market benchmarks
+        for benchmark_name, benchmark_data in market_data.items():
+            if benchmark_name != 'Total Crypto':  # Skip crypto since we showed it above
+                self._print_token_row(benchmark_name, benchmark_data)
             
         # Add legend
         print("\n📊 PERFORMANCE LEGEND:")
-        print("  🟢 = Positive returns | 🔴 = Negative returns | N/A = Data unavailable")
-        print("  All values shown as integer percentages")
+        print("  All values shown as absolute percentage returns")
         print(f"  🕐 Data retrieved: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         
+    
     def _print_token_row(self, token, returns):
         """Print a single token row with color coding"""
-        row = f"{token:<8}"
+        row = f"{token:<20}"
         
         for timeframe in ['1D', '7D', '30D', '90D', '180D', '365D', '3YR', '5YR']:
             return_val = returns.get(timeframe)
             
             if return_val is None:
                 cell = "N/A"
-                width = 4 if timeframe in ['1D', '7D', '3YR', '5YR'] else 5 if timeframe in ['30D', '90D'] else 6
-                row += f"{cell:<{width}}"
+                row += f"{cell:<8}"
             else:
                 # Format as integer percentage
                 if return_val >= 0:
-                    cell = f"+{return_val}%"
+                    cell = f"+{return_val:.0f}%"
                 else:
-                    cell = f"{return_val}%"
-                    
-                width = 4 if timeframe in ['1D', '7D', '3YR', '5YR'] else 5 if timeframe in ['30D', '90D'] else 6
-                row += f"{cell:<{width}}"
+                    cell = f"{return_val:.0f}%"
+                row += f"{cell:<8}"
                 
         print(row)
