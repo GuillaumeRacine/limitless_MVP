@@ -17,6 +17,7 @@ class CLMDataManager:
         self.neutral_positions = []
         self.closed_positions = []
         self.prices = {}
+        self.price_changes = {}
         self.fx_rates = {}
         
         # File paths
@@ -488,15 +489,16 @@ class CLMDataManager:
         else:
             position_details = str(position_details)
         
-        # Extract platform and token pair
+        # Extract token pair from position details
         if '|' in position_details:
-            platform, pair = position_details.split('|', 1)
-            platform = platform.strip()
+            _, pair = position_details.split('|', 1)
             pair = pair.strip()
         else:
-            platform_val = self.get_column_value(row, 'platform', csv_format)
-            platform = str(platform_val) if platform_val else 'Unknown'
             pair = position_details
+        
+        # Always get platform from the Platform column, not from position details
+        platform_val = self.get_column_value(row, 'platform', csv_format)
+        platform = str(platform_val) if platform_val else 'Unknown'
         
         # Normalize token pair format for pricing
         pair = self._normalize_token_pair(pair)
@@ -786,6 +788,17 @@ class CLMDataManager:
                 'RAY': 0.85,
                 'JLP': 0.032
             }
+            self.price_changes = {
+                'BTC': 2.3,
+                'ETH': 3.1,
+                'SOL': 5.2,
+                'SUI': 12.5,
+                'JLP': 1.1,
+                'ORCA': -2.4,
+                'RAY': 4.7,
+                'USDC': 0.0,
+                'USDT': -0.1
+            }
             print("🔄 Using demo prices (APIs unavailable)")
         
         # Demo FX rates if API fails
@@ -872,7 +885,7 @@ class CLMDataManager:
                 
             coingecko_ids = ','.join([coingecko_map[token] for token in missing_tokens])
             
-            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_ids}&vs_currencies=usd"
+            url = f"https://api.coingecko.com/api/v3/simple/price?ids={coingecko_ids}&vs_currencies=usd&include_24hr_change=true"
             response = requests.get(url, timeout=10)
             
             if response.status_code == 200:
@@ -882,6 +895,8 @@ class CLMDataManager:
                     gecko_id = coingecko_map[token]
                     if gecko_id in price_data:
                         self.prices[token] = price_data[gecko_id]['usd']
+                        if 'usd_24h_change' in price_data[gecko_id]:
+                            self.price_changes[token] = price_data[gecko_id]['usd_24h_change']
                 
                 coingecko_count = len([t for t in missing_tokens if t in self.prices])
                 if coingecko_count > 0:

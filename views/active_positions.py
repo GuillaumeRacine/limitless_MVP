@@ -5,226 +5,267 @@ Split by strategy: Long and Neutral are separate businesses
 """
 
 from datetime import datetime
+from typing import List, Dict, Any, Optional
 
 class ActivePositionsView:
     def __init__(self, data_manager):
         self.data_manager = data_manager
     
     def display(self):
-        """Display active positions with separate tables for Long and Neutral strategies"""
+        """Display active positions with improved formatting for large terminal"""
+        # Get all position data
         long_positions = self.data_manager.get_positions_by_strategy('long')
         neutral_positions = self.data_manager.get_positions_by_strategy('neutral')
         
-        print("\n" + "="*120)
-        print("🎯 ACTIVE POSITIONS - STRATEGY SPLIT VIEW")
-        print("="*120)
+        # Sort positions by value (highest to lowest)
+        long_positions = sorted(long_positions, key=lambda p: p.get('entry_value', 0) or 0, reverse=True)
+        neutral_positions = sorted(neutral_positions, key=lambda p: p.get('entry_value', 0) or 0, reverse=True)
         
-        # Display both strategies side by side
-        self._display_strategy_tables(long_positions, neutral_positions)
+        # Calculate total portfolio value
+        long_value = sum(p.get('entry_value', 0) or 0 for p in long_positions)
+        neutral_value = sum(p.get('entry_value', 0) or 0 for p in neutral_positions)
+        total_value = long_value + neutral_value
         
-        # Display token returns table below strategies
-        self._display_token_returns()
-    
-    def _display_strategy_tables(self, long_positions, neutral_positions):
-        """Display Long and Neutral strategies as two separate tables"""
+        # Calculate percentages for strategy allocation
+        long_pct = long_value / total_value * 100 if total_value > 0 else 0
+        neutral_pct = neutral_value / total_value * 100 if total_value > 0 else 0
         
-        # Display Long Strategy Table
-        self._display_single_strategy_table(long_positions, "📈 LONG STRATEGY", "long")
+        # Get latest prices and FX rates
+        prices = self.data_manager.prices
+        fx_rates = self.data_manager.fx_rates
+        usd_cad_rate = fx_rates.get('USD_CAD', 1.3665)  # Default if not available
         
-        print("\n")  # Space between tables
+        # Calculate 24h change (placeholder - replace with actual calculation if available)
+        daily_change_pct = 2.4  # Example value
         
-        # Display Neutral Strategy Table  
-        self._display_single_strategy_table(neutral_positions, "⚖️  NEUTRAL STRATEGY", "neutral")
-    
-    def _display_single_strategy_table(self, positions, title, strategy_type):
-        """Display a single strategy table"""
+        # Display header with portfolio summary (adjusted for full-width terminal)
+        print("╔════════════════════════════════════════════════════════════════════════════════════╗")
+        print(f"║ 📊 CRYPTO CLM PORTFOLIO DASHBOARD                  ${total_value:,.0f} (+{daily_change_pct:.1f}% 24h) ║")
         
-        # Calculate stats for this strategy
+        # Create visual bar for strategy allocation (adjusted for wider display)
+        bar_width = 30  # Wider bar for better visibility
+        long_bar_width = int((long_pct / 100) * bar_width)
+        long_bar = "█" * long_bar_width
+        neutral_bar = "░" * (bar_width - long_bar_width)
+        bar = f"{long_bar}{neutral_bar}"
+        
+        print(f"║ Long: {long_pct:.1f}% │{bar}│ Neutral: {neutral_pct:.1f}%   USD/CAD: {usd_cad_rate:.4f} ║")
+        print("╚════════════════════════════════════════════════════════════════════════════════════╝")
+        print()
+        
+        # Display Long Strategy positions
+        print(f"📈 LONG STRATEGY POSITIONS (${long_value:,.0f})")
+        self._display_positions_table(long_positions)
+        print()
+        
+        # Display Neutral Strategy positions
+        print(f"⚖️  NEUTRAL STRATEGY POSITIONS (${neutral_value:,.0f})")
+        self._display_positions_table(neutral_positions)
+        print()
+        
+        # Display Token Prices and Allocation by Chain
+        self._display_token_prices_and_allocation()
+        
+        # Display last refresh time (but no additional section headers)
+        last_refresh = getattr(self.data_manager, 'last_price_update', datetime.now())
+        print(f"\n🕐 Last refreshed: {last_refresh.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+    def _display_positions_table(self, positions):
+        """Display a table of positions with improved formatting for large terminal"""
         if not positions:
-            print(f"{title}")
-            print("=" * 80)
-            print("📊 No active positions in this strategy")
+            print("  No positions found")
             return
         
-        total_value = sum([p['entry_value'] for p in positions if p['entry_value']])
-        returns = [p['net_return'] for p in positions if p['net_return'] is not None]
-        avg_return = sum(returns) / len(returns) if returns else 0
+        # Print table header (adjusted width for better alignment)
+        print("┌────────────┬─────────┬─────┬────────┬──────────┬───────────┬────────────────┬───────────┐")
+        print("│ Position   │ Value   │ %   │ Chain  │ Platform │ Min       │ Range Slider   │ Max       │")
+        print("├────────────┼─────────┼─────┼────────┼──────────┼───────────┼────────────────┼───────────┤")
         
-        out_of_range = len([p for p in positions if p['range_status'].startswith('out_of_range')])
-        in_range = len([p for p in positions if p['range_status'] == 'in_range'])
+        # Calculate total value for percentage calculation
+        total_value = sum(p.get('entry_value', 0) or 0 for p in positions)
         
-        # Strategy header and stats
-        print(f"{title} - ${total_value:,.0f} Entry Value")
-        print("=" * 80)
-        print("-" * 138)
+        # Print each position
+        for position in positions:
+            # Extract position details
+            position_name = self._format_position_name(position.get('token_pair', 'Unknown'))
+            entry_value = position.get('entry_value', 0) or 0
+            percentage = (entry_value / total_value * 100) if total_value > 0 else 0
+            chain = position.get('chain', 'Unknown')
+            platform = position.get('platform', 'Unknown')
+            min_range = position.get('min_range')
+            max_range = position.get('max_range')
+            current_price = position.get('current_price')
+            range_status = position.get('range_status', 'unknown')
+            
+            # Generate range slider based on current price and range
+            range_slider = self._generate_range_slider(current_price, min_range, max_range, range_status)
+            
+            # Format the values for display
+            value_fmt = f"${entry_value:,.0f}"
+            pct_fmt = f"{percentage:.0f}%"
+            min_fmt = f"${min_range:.2f}" if min_range is not None else "N/A"
+            max_fmt = f"${max_range:.2f}" if max_range is not None else "N/A"
+            
+            # Truncate strings to fit in columns
+            position_name = position_name[:10]
+            chain = chain[:6]
+            platform = platform[:8]
+            
+            # Print the row with proper alignment and wider slider column
+            print(f"│ {position_name:<10} │ {value_fmt:>7} │ {pct_fmt:>3} │ {chain:<6} │ {platform:<8} │ {min_fmt:>9} │ {range_slider:^14} │ {max_fmt:>9} │")
         
-        # Table header
-        print(f"{'Position':<20} {'Entry USD':<10} {'%':<5} {'Chain':<6} {'Platform':<10} {'Min Range':<10} {'Price':<10} {'Max Range':<10} {'Status':<12} {'Days':<5} {'Return':<8} {'Range Slider'}")
-        print("-" * 138)
-        
-        # Sort positions: out of range first
-        sorted_positions = sorted(positions, key=lambda x: (
-            0 if x['range_status'].startswith('out_of_range') else 1
-        ))
-        
-        # Display each position
-        for position in sorted_positions:
-            self._print_strategy_position_row(position, total_value)
+        # Print table footer
+        print("└────────────┴─────────┴─────┴────────┴──────────┴───────────┴────────────────┴───────────┘")
     
-    def _print_strategy_position_row(self, position, strategy_total):
-        """Print a single position row in strategy table format"""
-        current_price = position.get('current_price', 0)
-        range_status = position.get('range_status', 'unknown')
+    def _format_position_name(self, token_pair):
+        """Format the position name for display"""
+        if not token_pair:
+            return "Unknown"
         
-        # Status indicators
-        if range_status == 'in_range':
-            status_text = 'Active'
-        elif range_status.startswith('out_of_range'):
-            status_text = 'Out of Range'
-        elif range_status == 'perp_active':
-            status_text = 'Active'  # Perp within acceptable range
-        elif range_status == 'perp_closed':
-            status_text = 'Closed'  # Perp above liquidation
+        # Standardize token pair format
+        if "/" in token_pair:
+            return token_pair
+        elif "+" in token_pair:
+            tokens = token_pair.split("+")
+            return f"{tokens[0].strip()}/USD"
+        else:
+            return token_pair
+    
+    def _generate_range_slider(self, current_price, min_range, max_range, range_status):
+        """Generate a visual range slider based on current price and range"""
+        # Handle positions without ranges
+        if min_range is None or max_range is None:
+            return "Market Order"
+        
+        # Handle current price missing
+        if current_price is None:
+            return "├──────?──────┤"
+        
+        # Generate slider based on price position relative to range
+        if range_status == 'out_of_range_low':
+            return "🚨●┤────────────├"
+        elif range_status == 'out_of_range_high':
+            return "├────────────┤●🚨"
         elif range_status == 'no_range':
-            status_text = 'Unknown'  # Position without ranges
-        else:
-            status_text = 'Unknown'
-        
-        # Format individual column values
-        min_range = position.get('min_range')
-        max_range = position.get('max_range')
-        current_price = position.get('current_price', 0)
-        entry_value = position.get('entry_value', 0)
-        chain = position.get('chain', 'Unknown')
-        
-        min_str = f"${min_range:.2f}" if min_range else "N/A"
-        price_str = f"${current_price:.2f}" if current_price else "N/A"
-        max_str = f"${max_range:.2f}" if max_range else "N/A"
-        entry_str = f"${entry_value:,.0f}" if entry_value else "N/A"
-        chain_str = chain[:6]  # Truncate to fit column
-        
-        # Calculate percentage of strategy total
-        if entry_value and strategy_total and strategy_total > 0:
-            percentage = (entry_value / strategy_total) * 100
-            percent_str = f"{percentage:.1f}%"
-        else:
-            percent_str = "N/A"
-        
-        days_str = str(int(position['days_active'])) if position['days_active'] else "N/A"
-        return_str = f"{position['net_return']:.2f}%" if position['net_return'] else "N/A"
-        
-        # Create simplified slider for rightmost column
-        slider_str = self._create_simple_slider(position)
-        
-        # Truncate position name to fit
-        pos_name = (position['token_pair'][:20] if position['token_pair'] 
-                   else position['position_details'][:20])
-        platform = position['platform'][:10]
-        
-        # Apply highlighting for out of range positions
-        if range_status.startswith('out_of_range'):
-            # White background, black text for out of range
-            line = f"{pos_name:<20} {entry_str:<10} {percent_str:<5} {chain_str:<6} {platform:<10} {min_str:<10} {price_str:<10} {max_str:<10} {status_text:<12} {days_str:<5} {return_str:<8} {slider_str}"
-            print(f"\033[47m\033[30m{line}\033[0m")
-        else:
-            print(f"{pos_name:<20} {entry_str:<10} {percent_str:<5} {chain_str:<6} {platform:<10} {min_str:<10} {price_str:<10} {max_str:<10} {status_text:<12} {days_str:<5} {return_str:<8} {slider_str}")
-    
-    def _create_simple_slider(self, position):
-        """Create a simple visual slider for the rightmost column"""
-        current_price = position.get('current_price', 0)
-        min_range = position.get('min_range')
-        max_range = position.get('max_range')
-        
-        # Return dash if no range data
-        if not min_range or not max_range:
-            return "───────────"
-        
-        if current_price:
-            # Calculate position on slider (0-1, can be outside bounds)
-            price_ratio = (current_price - min_range) / (max_range - min_range)
-            
-            # Create 11-character slider
-            slider_length = 11
-            slider = ['─'] * slider_length
-            slider[0] = '├'  # Left bound
-            slider[-1] = '┤'  # Right bound
-            
-            # Position indicator
-            if price_ratio <= 0:
-                # Below range
-                slider[0] = '◄'
-                overshoot = abs(price_ratio) * 100
-                if overshoot > 50:
-                    slider[0] = '⮘'  # Far below
-            elif price_ratio >= 1:
-                # Above range
-                slider[-1] = '►'
-                overshoot = (price_ratio - 1) * 100
-                if overshoot > 50:
-                    slider[-1] = '⮚'  # Far above
+            return "Market Order"
+        elif range_status == 'in_range':
+            # Calculate position within range
+            range_width = max_range - min_range
+            if range_width <= 0:
+                position_ratio = 0.5  # Default to middle if range is invalid
             else:
-                # Within range
-                position_index = int(price_ratio * (slider_length - 1))
-                position_index = max(1, min(slider_length - 2, position_index))  # Keep within bounds
-                slider[position_index] = '●'
+                position_ratio = (current_price - min_range) / range_width
+                position_ratio = max(0, min(1, position_ratio))  # Clamp between 0 and 1
+            
+            # Create slider with position indicator (wider for better visibility)
+            slider_positions = 14  # Total width of slider
+            position_index = int(position_ratio * (slider_positions - 3)) + 1
+            
+            slider = ['─'] * slider_positions
+            slider[0] = '├'
+            slider[-1] = '┤'
+            slider[position_index] = '●'
             
             return ''.join(slider)
         else:
-            return "├─────────┤"
+            # Default case for unknown status
+            return "├──────?──────┤"
     
-    def _create_price_slider(self, position):
-        """Create a visual slider showing current price within min/max range with price details"""
-        current_price = position.get('current_price', 0)
-        min_range = position.get('min_range')
-        max_range = position.get('max_range')
+    def _display_token_prices_and_allocation(self):
+        """Display token prices and allocation information in a structured format for large terminal"""
+        # Get price data
+        prices = self.data_manager.prices
+        price_changes = self.data_manager.price_changes if hasattr(self.data_manager, 'price_changes') else {}
         
-        # Return dash if no range data
-        if not min_range or not max_range:
-            return "Range: N/A | Current: N/A"
+        # Calculate chain allocation
+        chain_allocation = self._calculate_chain_allocation()
         
-        # Format prices with exactly 2 decimal places
-        def format_price(price):
-            return f"${price:.2f}"
+        # Define target tokens for display
+        target_tokens = ['BTC', 'ETH', 'SOL', 'SUI', 'JLP', 'USDC']
         
-        min_str = format_price(min_range)
-        max_str = format_price(max_range)
-        current_str = format_price(current_price) if current_price else "N/A"
+        # Print tables side by side (adjusted for better alignment)
+        print("💰 TOKEN PRICES                        📊 ALLOCATION BY CHAIN")
+        print("┌────────┬──────────┬──────┐          ┌──────────┬─────┬─────────────────────┐")
+        print("│ Token  │ Price    │ 24h  │          │ Chain    │ %   │ Chart               │")
+        print("├────────┼──────────┼──────┤          ├──────────┼─────┼─────────────────────┤")
         
-        # Create slider if we have current price
-        if current_price:
-            # Calculate position on slider (0-1, can be outside bounds)
-            price_ratio = (current_price - min_range) / (max_range - min_range)
+        # Determine how many rows to display (max of tokens or chains)
+        max_rows = max(len(target_tokens), len(chain_allocation))
+        chain_data = list(chain_allocation.items())
+        
+        # Print rows for each token and chain
+        for i in range(max_rows):
+            # Token data
+            token = target_tokens[i] if i < len(target_tokens) else ""
+            price = prices.get(token, 0) if token else 0
+            change = price_changes.get(token, 0) if token else 0
             
-            # Create 12-character slider
-            slider_length = 12
-            slider = ['─'] * slider_length
-            slider[0] = '├'  # Left bound
-            slider[-1] = '┤'  # Right bound
-            
-            # Position indicator
-            if price_ratio <= 0:
-                # Below range - show how far below
-                slider[0] = '◄'
-                overshoot = abs(price_ratio) * 100
-                if overshoot > 50:
-                    slider[0] = '⮘'  # Far below
-            elif price_ratio >= 1:
-                # Above range - show how far above
-                slider[-1] = '►'
-                overshoot = (price_ratio - 1) * 100
-                if overshoot > 50:
-                    slider[-1] = '⮚'  # Far above
+            # Format price based on value
+            if token:
+                if price > 1000:
+                    price_str = f"${price:,.0f}"
+                elif price > 1:
+                    price_str = f"${price:.2f}"
+                else:
+                    price_str = f"${price:.6f}"
+                
+                # Format 24h change
+                change_str = f"{change:+.1f}%" if change else "N/A"
             else:
-                # Within range
-                position_index = int(price_ratio * (slider_length - 1))
-                position_index = max(1, min(slider_length - 2, position_index))  # Keep within bounds
-                slider[position_index] = '●'
+                price_str = ""
+                change_str = ""
+                
+            # Chain data for this row
+            chain_name = chain_data[i][0] if i < len(chain_data) else ""
+            chain_pct = chain_data[i][1] if i < len(chain_data) else 0
             
-            slider_str = ''.join(slider)
-            return f"{min_str} {slider_str} {max_str} | {current_str}"
-        else:
-            return f"{min_str} ─────────── {max_str} | No Price"
+            # Create visual chart for chain allocation (wider for better visibility)
+            chart = ""
+            if i < len(chain_data):
+                chart_width = 20
+                bars = int((chain_pct / 100) * chart_width)
+                chart = "█" * bars + "░" * (chart_width - bars)
+            
+            # Format chain percentage
+            chain_pct_str = f"{chain_pct:.0f}%" if i < len(chain_data) else ""
+            
+            # Print token and chain rows with proper alignment
+            token_part = f"│ {token:<6} │ {price_str:>8} │ {change_str:>4} │" if token else "│        │          │      │"
+            
+            # Add extra spacing between tables
+            if chain_name:
+                chain_part = f"          │ {chain_name:<8} │ {chain_pct_str:>3} │ {chart:<19} │"
+            else:
+                chain_part = "          │          │     │                     │"
+            
+            print(f"{token_part}{chain_part}")
+        
+        # Print footer rows
+        print("└────────┴──────────┴──────┘          └──────────┴─────┴─────────────────────┘")
     
+    def _calculate_chain_allocation(self):
+        """Calculate allocation percentages by blockchain"""
+        all_positions = self.data_manager.get_all_active_positions()
+        total_value = sum(p.get('entry_value', 0) or 0 for p in all_positions)
+        
+        # Group by chain
+        chain_values = {}
+        for position in all_positions:
+            chain = position.get('chain', 'Unknown')
+            entry_value = position.get('entry_value', 0) or 0
+            
+            if chain not in chain_values:
+                chain_values[chain] = 0
+            chain_values[chain] += entry_value
+        
+        # Calculate percentages
+        chain_percentages = {}
+        for chain, value in chain_values.items():
+            percentage = (value / total_value * 100) if total_value > 0 else 0
+            chain_percentages[chain] = percentage
+        
+        # Sort by percentage (descending)
+        return dict(sorted(chain_percentages.items(), key=lambda x: x[1], reverse=True))
     
     def display_strategy_detail(self, strategy):
         """Display detailed view for a specific strategy"""
@@ -313,7 +354,7 @@ class ActivePositionsView:
             # Calculate percentage of strategy total
             if entry_value and total_value and total_value > 0:
                 percentage = (entry_value / total_value) * 100
-                percent_str = f"{percentage:.1f}%"
+                percent_str = f"{percentage:.0f}%"
             else:
                 percent_str = "N/A"
             
@@ -335,94 +376,50 @@ class ActivePositionsView:
             else:
                 print(f"{pos_name:<25} {entry_str:<10} {percent_str:<5} {chain_str:<6} {platform:<12} {min_str:<10} {current_str:<10} {max_str:<10} {status_str:<20} {days_str:<5} {return_str:<8} {slider_str}")
     
-    def _display_token_returns(self):
-        """Display current token prices for key portfolio tokens"""
-        print("\n\n" + "="*120)
-        print("💰 CURRENT TOKEN PRICES")
-        print("="*120)
+    def _create_simple_slider(self, position):
+        """Create a simple visual slider for the rightmost column"""
+        current_price = position.get('current_price', 0)
+        min_range = position.get('min_range')
+        max_range = position.get('max_range')
+        range_status = position.get('range_status', 'unknown')
         
-        # Define specific tokens to display
-        target_tokens = ['BTC', 'ETH', 'SOL', 'SUI', 'JLP']
+        # Return dash if no range data
+        if not min_range or not max_range or range_status == 'no_range':
+            return "Market Order"
         
-        # Get current prices from data manager
-        self._display_token_prices_table(target_tokens)
-    
-    def _display_token_prices_table(self, tokens):
-        """Display current USD prices for tokens"""
-        # Ensure prices are available
-        if not self.data_manager.prices:
-            self.data_manager.get_token_prices()
-        
-        # Create two columns for better layout
-        left_tokens = tokens[:5]
-        right_tokens = tokens[5:]
-        
-        print(f"\n{'Token':<10} {'USD Price':<15} {'24h Change':<12} {'Token':<10} {'USD Price':<15} {'24h Change':<12}")
-        print("-" * 80)
-        
-        # Display prices in two columns
-        for i in range(max(len(left_tokens), len(right_tokens))):
-            left_part = ""
-            right_part = ""
+        if current_price:
+            # Calculate position on slider (0-1, can be outside bounds)
+            try:
+                price_ratio = (current_price - min_range) / (max_range - min_range)
+            except:
+                price_ratio = 0.5  # Default to middle if calculation fails
             
-            if i < len(left_tokens):
-                token = left_tokens[i]
-                price = self.data_manager.prices.get(token, 0)
-                change = self._get_demo_24h_change(token)  # Demo 24h change
-                left_part = self._format_price_row(token, price, change)
+            # Create slider (wider for better visibility)
+            slider_positions = 14
+            slider = ['─'] * slider_positions
+            slider[0] = '├'
+            slider[-1] = '┤'
             
-            if i < len(right_tokens):
-                token = right_tokens[i]
-                price = self.data_manager.prices.get(token, 0)
-                change = self._get_demo_24h_change(token)  # Demo 24h change
-                right_part = self._format_price_row(token, price, change)
-            
-            print(f"{left_part:<40} {right_part}")
-        
-        # Display FX rates
-        print("\n" + "-" * 80)
-        print("💱 FX Rates:")
-        usd_cad = self.data_manager.fx_rates.get('USD_CAD', 1.43)
-        print(f"USD/CAD: {usd_cad:.4f}")
-        
-        # Get last price update timestamp from data manager
-        last_update = getattr(self.data_manager, 'last_price_update', None)
-        if last_update:
-            timestamp_str = last_update.strftime('%Y-%m-%d %H:%M:%S')
+            # Position indicator
+            if range_status == 'out_of_range_low':
+                # Below range
+                return "🚨●┤────────────├"
+            elif range_status == 'out_of_range_high':
+                # Above range
+                return "├────────────┤●🚨"
+            elif price_ratio <= 0:
+                # Near below range
+                slider[0] = '⚠'
+                return ''.join(slider)
+            elif price_ratio >= 1:
+                # Near above range
+                slider[-1] = '⚠'
+                return ''.join(slider)
+            else:
+                # Within range
+                position_index = int(price_ratio * (slider_positions - 3)) + 1
+                position_index = max(1, min(slider_positions - 2, position_index))  # Keep within bounds
+                slider[position_index] = '●'
+                return ''.join(slider)
         else:
-            timestamp_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            
-        print(f"\n🕐 Prices last refreshed: {timestamp_str}")
-    
-    def _format_price_row(self, token, price, change):
-        """Format a single price row"""
-        if price > 1000:
-            price_str = f"${price:,.0f}"
-        elif price > 1:
-            price_str = f"${price:.2f}"
-        else:
-            price_str = f"${price:.6f}"
-        
-        if change > 0:
-            change_str = f"🟢 +{change:.1f}%"
-        elif change < 0:
-            change_str = f"🔴 {change:.1f}%"
-        else:
-            change_str = f"⚪ {change:.1f}%"
-        
-        return f"{token:<10} {price_str:<15} {change_str:<12}"
-    
-    def _get_demo_24h_change(self, token):
-        """Get demo 24h change for tokens"""
-        demo_changes = {
-            'BTC': 2.3,
-            'ETH': 3.1,
-            'SOL': 5.2,
-            'SUI': 12.5,
-            'JLP': 1.1,
-            'ORCA': -2.4,
-            'RAY': 4.7,
-            'USDC': 0.0,
-            'USDT': -0.1
-        }
-        return demo_changes.get(token, 0.0)
+            return "├──────?──────┤"

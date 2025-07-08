@@ -165,6 +165,40 @@ Ask natural language questions:
 - **SUI**: Native blockchain integration
 - **Base/Arbitrum**: Layer 2 scaling solutions
 
+## Development
+
+### New Data Management System (V2)
+
+A new normalized data management system has been implemented alongside the existing CSV import method for testing:
+
+#### V2 System Files
+- `data_models.py` - Normalized data models with proper relationships
+- `data_manager_v2.py` - CRUD operations for all entities
+- `platform_apis.py` - Direct platform API integrations
+- `test_data_manager_v2.py` - Comprehensive test suite
+- `clm_v2_cli.py` - Command-line interface for V2 system
+
+#### V2 Features
+- **Direct Platform APIs**: Raydium, Orca, Jupiter, CETUS, GMX official APIs
+- **Normalized Schema**: Proper relationships between wallets, positions, transactions
+- **Type Safety**: Dataclasses with enums and validation
+- **Real-time Data**: "Closest to ground truth" approach with blockchain data
+- **Parallel Testing**: Runs alongside existing system for validation
+
+#### Testing V2 System
+```bash
+# Run comprehensive test suite
+python test_data_manager_v2.py
+
+# Use CLI interface
+python clm_v2_cli.py list wallets
+python clm_v2_cli.py create wallet "0x123..." ethereum "Main Wallet"
+python clm_v2_cli.py portfolio
+python clm_v2_cli.py health
+```
+
+The V2 system is designed for production scaling and will eventually replace the current CSV import method after thorough testing.
+
 ## Contributing
 
 1. Follow existing code patterns in `views/` modules

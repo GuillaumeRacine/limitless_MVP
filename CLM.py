@@ -8,6 +8,7 @@ import os
 import pandas as pd
 from time import sleep
 from datetime import datetime, timedelta
+import select
 
 # Load environment variables
 try:
@@ -39,10 +40,10 @@ class CLMTracker:
     def run_cli(self):
         """Main CLI loop"""
         while True:
-            # Check if 60 minutes have passed since last auto-refresh
+            # Check if 15 minutes have passed since last auto-refresh
             time_since_refresh = datetime.now() - self.last_auto_refresh
-            if time_since_refresh > timedelta(minutes=60):
-                print("🔄 Auto-refreshing prices (60 minutes elapsed)...")
+            if time_since_refresh > timedelta(minutes=15):
+                print("🔄 Auto-refreshing prices (15 minutes elapsed)...")
                 self.data_manager.refresh_prices_and_status()
                 self.last_auto_refresh = datetime.now()
                 
@@ -58,60 +59,95 @@ class CLMTracker:
             
             # Show menu
             print(f"\n{'='*120}")
-            print("📋 Main Views: [1] Active Positions  [2] Transactions  [3] Historical Returns  [4] Allocation Breakdown  [5] Prices  [6] Token Performance")
-            print("📊 Market Analysis: [7] DefiLlama Dashboard")
-            print("🔍 Strategy Details: [L] Long Strategy  [N] Neutral Strategy")
-            
+            print("📊 Views: [1] Active Positions  [2] Returns  [3] Weights  [4] Markets")
             print("🔧 Actions: [r]efresh | [i]mport transactions | [q]uit")
-            
-            # Show time until next auto-refresh
-            time_until_refresh = timedelta(minutes=60) - (datetime.now() - self.last_auto_refresh)
-            minutes_left = int(time_until_refresh.total_seconds() / 60)
-            seconds_left = int(time_until_refresh.total_seconds() % 60)
-            print(f"🕐 Next auto-refresh in: {minutes_left}m {seconds_left}s")
-            
             print("="*120)
             
             try:
-                choice = input("\nSelect view or action: ").lower().strip()
+                # Non-blocking input check for auto-refresh
+                print("\nSelect view or action: ", end='', flush=True)
+                
+                # Check for input with timeout
+                timeout = 0.5  # Check every 0.5 seconds
+                start_time = datetime.now()
+                choice = ""
+                
+                while True:
+                    # Check if we need to auto-refresh
+                    time_since_refresh = datetime.now() - self.last_auto_refresh
+                    if time_since_refresh > timedelta(minutes=15):
+                        print("\n🔄 Auto-refreshing prices (15 minutes elapsed)...")
+                        self.data_manager.refresh_prices_and_status()
+                        self.last_auto_refresh = datetime.now()
+                        break  # Exit input loop to redraw screen
+                    
+                    # Check for user input (platform-specific)
+                    if sys.platform == 'win32':
+                        # Windows doesn't support select on stdin
+                        import msvcrt
+                        if msvcrt.kbhit():
+                            char = msvcrt.getch().decode('utf-8', errors='ignore')
+                            if char == '\r' or char == '\n':
+                                break
+                            elif char == '\x08':  # Backspace
+                                if choice:
+                                    choice = choice[:-1]
+                                    print('\b \b', end='', flush=True)
+                            else:
+                                choice += char
+                                print(char, end='', flush=True)
+                    else:
+                        # Unix/Linux/Mac
+                        if sys.stdin in select.select([sys.stdin], [], [], timeout)[0]:
+                            line = sys.stdin.readline().strip()
+                            choice = line
+                            break
+                    
+                    # Small sleep to prevent CPU spinning
+                    sleep(0.1)
+                
+                choice = choice.lower().strip()
+                
+                # If we broke out due to auto-refresh and no choice made, continue
+                if not choice and time_since_refresh > timedelta(minutes=15):
+                    continue
                 
                 if choice in ['q', 'quit', 'exit']:
                     print("👋 Goodbye!")
                     break
-                elif choice in ['1', 'active', 'positions']:
+                elif choice in ['1', 'main', 'active', 'positions']:
                     continue  # Stay on home view
-                elif choice in ['l', 'long']:
-                    print("\033[2J\033[H")
-                    self.active_view.display_strategy_detail('long')
-                    input("\nPress Enter to return...")
-                elif choice in ['n', 'neutral']:
-                    print("\033[2J\033[H")
-                    self.active_view.display_strategy_detail('neutral')
-                    input("\nPress Enter to return...")
-                elif choice in ['2', 'transactions']:
-                    print("\033[2J\033[H")
-                    self.transactions_view.display()
-                    input("\nPress Enter to return...")
-                elif choice in ['3', 'historical', 'returns']:
+                elif choice in ['2', 'portfolio', 'returns']:
                     print("\033[2J\033[H")
                     self.historical_view.display()
                     input("\nPress Enter to return...")
-                elif choice in ['4', 'allocation', 'breakdown']:
+                elif choice in ['3', 'weights', 'allocation']:
                     print("\033[2J\033[H")
                     self.breakdown_view.display()
                     input("\nPress Enter to return...")
-                elif choice in ['5', 'prices', 'pricing']:
+                elif choice in ['4', 'markets', 'market']:
                     print("\033[2J\033[H")
-                    self.prices_view.display()
-                    input("\nPress Enter to return...")
-                elif choice in ['6', 'performance', 'token performance', 'historical performance']:
-                    print("\033[2J\033[H")
-                    self.historical_performance_view.display()
-                    input("\nPress Enter to return...")
-                elif choice in ['7', 'market', 'defillama', 'market analysis']:
-                    print("\033[2J\033[H")
-                    self.market_analysis_view.display()
-                    input("\nPress Enter to return...")
+                    # Show market submenu
+                    print("📊 Market Analysis")
+                    print("="*60)
+                    print("[1] Token Historical Performance")
+                    print("[2] DefiLlama Dashboard & Queries")
+                    print("[3] Current Prices")
+                    print("[b] Back to main menu")
+                    
+                    market_choice = input("\nSelect market view: ").lower().strip()
+                    if market_choice == '1':
+                        print("\033[2J\033[H")
+                        self.historical_performance_view.display()
+                        input("\nPress Enter to return...")
+                    elif market_choice == '2':
+                        print("\033[2J\033[H")
+                        self.market_analysis_view.display()
+                        input("\nPress Enter to return...")
+                    elif market_choice == '3':
+                        print("\033[2J\033[H")
+                        self.prices_view.display()
+                        input("\nPress Enter to return...")
                 elif choice in ['r', 'refresh']:
                     print("🔄 Refreshing data...")
                     self.last_auto_refresh = datetime.now()  # Reset auto-refresh timer
@@ -121,7 +157,7 @@ class CLMTracker:
                     self.import_transactions_menu()
                     input("\nPress Enter to return...")
                 else:
-                    print("❌ Invalid choice. Use 1, 2, 3, 4, 5, 6, 7, L, N, i, r, or q")
+                    print("❌ Invalid choice. Use 1, 2, 3, 4, i, r, or q")
                     sleep(1)
                     
             except KeyboardInterrupt:

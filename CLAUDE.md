@@ -157,3 +157,58 @@ Includes 7 main views plus strategy details and natural language querying:
 - **Historical Price Integration**: USD value calculation at transaction time
 - **Multi-Format Support**: CSV imports from various DEX and wallet sources
 
+## Data Management System V2 (January 2025)
+
+### New Normalized Architecture
+A new data management system has been implemented alongside the existing CSV import method for testing and future production use.
+
+#### Core Components
+- **`data_models.py`**: Normalized data models with proper relationships using dataclasses and enums
+- **`data_manager_v2.py`**: Full CRUD operations for all entities with JSON-based storage
+- **`platform_apis.py`**: Direct platform API integrations for real-time data
+- **`test_data_manager_v2.py`**: Comprehensive test suite for all functionality
+- **`clm_v2_cli.py`**: Command-line interface for V2 system management
+
+#### Data Model Schema
+```python
+# Core entities with proper relationships
+Wallet → Positions → Transactions
+Token ← TradingPair → Platform
+Position ← PriceData → Portfolio Snapshots
+```
+
+#### Direct Platform Integration
+- **Raydium API**: `https://api.raydium.io/v2/` - AMM pools and positions
+- **Orca API**: `https://api.orca.so/v1/` - Whirlpool data
+- **Jupiter API**: `https://api.jup.ag/` - Perpetual positions
+- **CETUS API**: `https://api-sui.cetus.zone/` - SUI DEX data
+- **GMX API**: `https://api.gmx.io/` - Arbitrum perpetuals
+
+#### Key Features
+- **Normalized Schema**: Eliminates data duplication and inconsistencies
+- **Type Safety**: Dataclasses with enums prevent data corruption
+- **Direct APIs**: "Closest to ground truth" approach eliminates third-party data risks
+- **Real-time Updates**: Live data from official platform APIs
+- **Parallel Testing**: Runs alongside existing system for validation
+- **JSON Storage**: Database-ready structure with proper relationships
+
+#### Testing V2 System
+```bash
+# Run comprehensive test suite
+python test_data_manager_v2.py
+
+# CLI operations
+python clm_v2_cli.py list wallets
+python clm_v2_cli.py create position wallet_id SOL USDC raydium long clm 1000
+python clm_v2_cli.py portfolio
+python clm_v2_cli.py health  # Check API connectivity
+```
+
+#### Migration Path
+The V2 system is designed to eventually replace the current CSV import method after thorough testing. It provides:
+- Better data integrity through normalized relationships
+- Real-time updates from official platform APIs
+- Scalable architecture for production use
+- Comprehensive testing framework
+- Direct blockchain data access without third-party intermediaries
+
