@@ -1,6 +1,6 @@
 # CLM Portfolio Tracker
 
-A streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions with real-time price tracking and AI-powered market analysis.
+A streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions with real-time price tracking.
 
 ## Quick Start
 
@@ -16,73 +16,56 @@ Place your CSV files in the `data/` folder:
 - `data/Tokens_Trade_Sheet - Long Positions.csv`
 - `data/Tokens_Trade_Sheet - Neutral Positions.csv`
 
+**💡 Pro Tip**: Use the integrated position editor ([e] option in the main menu) to access a custom GPT tool that helps format your position data correctly.
+
 ### Run the Application
 ```bash
 python CLM.py
 ```
 
-The app will auto-detect your CSV files and start monitoring your positions with live price updates every 60 minutes.
+The app will auto-detect your CSV files and start monitoring your positions with live price updates.
 
 ## Core Features
 
 ### Position Monitoring
-- **Live Price Updates**: 60-minute auto-refresh with countdown timer
+- **Live Price Updates**: Real-time price refresh on each view
 - **Visual Range Indicators**: See if positions are in-range at a glance
 - **Strategy Split View**: Separate Long and Neutral position tracking
 - **Multi-Chain Support**: SOL, ETH, SUI, BASE, ARB positions
 
 ### Dashboard Views
 1. **[1] Active Positions** - Main dashboard with live prices and range sliders
-2. **[2] Transactions** - Transaction history analysis
-3. **[3] Historical Returns** - Performance tracking over time
-4. **[4] Allocation Breakdown** - Portfolio distribution
-5. **[5] Prices** - Real-time pricing dashboard for major tokens
-6. **[6] Market Analysis** - AI-powered DeFi insights with natural language queries
-
-### AI Market Analysis
-Ask questions in natural language:
-- "What's the TVL on Solana?"
-- "Show me the top pools on Arbitrum" 
-- "What are the best yield opportunities?"
-
-Supports OpenAI GPT and Anthropic Claude APIs.
+2. **[2] Performance** - Historical returns and token performance analysis
+3. **[3] Allocation** - Portfolio distribution breakdown
+4. **[4] Transactions** - Transaction history view
+5. **[e] Edit Positions** - Link to custom GPT tool for position data formatting
 
 ## Project Structure
 
 ```
 CLM.py                     # Main CLI application
-clm_data.py               # Data processing and API integration
+clm_data.py               # Simplified data processing and API integration
 requirements.txt          # Python dependencies
-.env                      # API keys (create your own)
 
 views/                    # Display modules
 ├── active_positions.py      # Main dashboard
-├── transactions.py          # Transaction history
-├── historical_returns.py    # Performance tracking
+├── performance.py           # Combined performance analysis
 ├── allocation_breakdown.py  # Portfolio analysis
-├── prices.py               # Real-time prices
-└── market_analysis.py      # AI-powered insights
-
-utils/                    # Shared utilities
-├── formatting.py           # Display formatting
-├── calculations.py         # Common calculations
-├── defillama_client.py     # DeFi data API
-└── nlp_query.py           # Natural language processing
+└── transactions.py          # Transaction history
 
 data/                     # Your data files
 ├── Tokens_Trade_Sheet - Long Positions.csv
 ├── Tokens_Trade_Sheet - Neutral Positions.csv
 └── JSON_out/            # Generated JSON files
+
+archive/                  # Legacy components
+├── views/                  # Old view files
+├── old_files/             # Previous versions
+├── tests/                 # Test files
+└── utils/                 # Archived utilities
 ```
 
 ## Configuration
-
-### API Keys (Optional)
-Create a `.env` file for AI features:
-```bash
-OPENAI_API_KEY=your_openai_key_here
-ANTHROPIC_API_KEY=your_anthropic_key_here
-```
 
 ### Supported Tokens
 - **Major Crypto**: BTC, ETH, SOL, SUI
@@ -118,14 +101,6 @@ JLP/SOL         $22,509     SOL    Orca       $0.03     ├──────●
 SOL/USDC        $1,346      SOL    Perp       $138.68   ───────────     3
 ```
 
-### AI Market Analysis
-Ask natural language questions:
-```bash
-> "What's the current TVL on Solana DEXs?"
-> "Show me yield opportunities above 10%"  
-> "What are the top performing pools this week?"
-```
-
 ## Troubleshooting
 
 ### Common Issues
@@ -140,18 +115,13 @@ Ask natural language questions:
 - App falls back to demo prices automatically
 - Rate limits: DefiLlama (unlimited), CoinGecko (30/min)
 
-**AI features not working**
-- Create `.env` file with your API keys
-- Both OpenAI and Anthropic keys are optional
-- App works without AI features for basic monitoring
-
 ## Technical Details
 
 ### Data Processing
-1. CSV files → JSON conversion with auto-detection
+1. CSV files → JSON conversion with simplified parsing
 2. Live price fetching from DefiLlama + CoinGecko APIs  
 3. Position status calculation (in-range vs out-of-range)
-4. 60-minute auto-refresh cycle
+4. Real-time refresh on each view
 
 ### Pricing Logic
 - **Standard pairs** (SOL/USDC): Uses base token price
@@ -165,39 +135,21 @@ Ask natural language questions:
 - **SUI**: Native blockchain integration
 - **Base/Arbitrum**: Layer 2 scaling solutions
 
-## Development
+## Architecture Changes
 
-### New Data Management System (V2)
+### Simplified Design
+The codebase has been streamlined for better maintainability:
+- **Consolidated Views**: Combined historical returns and token performance
+- **Unified Data Manager**: Single parsing method for all value types
+- **Simplified CLI**: 4-view menu system
+- **Archived Legacy**: Complex V2 system and utilities moved to `archive/`
 
-A new normalized data management system has been implemented alongside the existing CSV import method for testing:
-
-#### V2 System Files
-- `data_models.py` - Normalized data models with proper relationships
-- `data_manager_v2.py` - CRUD operations for all entities
-- `platform_apis.py` - Direct platform API integrations
-- `test_data_manager_v2.py` - Comprehensive test suite
-- `clm_v2_cli.py` - Command-line interface for V2 system
-
-#### V2 Features
-- **Direct Platform APIs**: Raydium, Orca, Jupiter, CETUS, GMX official APIs
-- **Normalized Schema**: Proper relationships between wallets, positions, transactions
-- **Type Safety**: Dataclasses with enums and validation
-- **Real-time Data**: "Closest to ground truth" approach with blockchain data
-- **Parallel Testing**: Runs alongside existing system for validation
-
-#### Testing V2 System
-```bash
-# Run comprehensive test suite
-python test_data_manager_v2.py
-
-# Use CLI interface
-python clm_v2_cli.py list wallets
-python clm_v2_cli.py create wallet "0x123..." ethereum "Main Wallet"
-python clm_v2_cli.py portfolio
-python clm_v2_cli.py health
-```
-
-The V2 system is designed for production scaling and will eventually replace the current CSV import method after thorough testing.
+### Archive Structure
+Legacy components have been moved to `archive/` for reference:
+- Advanced V2 system with normalized data models
+- Complex market analysis and NLP features
+- Comprehensive test suites
+- Utility functions for formatting and calculations
 
 ## Contributing
 
@@ -206,4 +158,4 @@ The V2 system is designed for production scaling and will eventually replace the
 3. Test with sample data before production use
 4. Update documentation for new features
 
-For questions or issues, check the existing code structure and API integrations in the `utils/` folder.
+For questions or issues, check the existing code structure and API integrations in the main application files.

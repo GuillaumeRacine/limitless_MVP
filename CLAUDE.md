@@ -4,27 +4,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CLM Portfolio Tracker is a streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions with real-time price tracking and AI-powered market analysis. It tracks Long and Neutral strategy positions across multiple chains and platforms through CSV import and 60-minute auto-refresh cycles.
+CLM Portfolio Tracker is a streamlined Python CLI application for monitoring cryptocurrency liquidity mining positions with real-time price tracking. It tracks Long and Neutral strategy positions across multiple chains and platforms through CSV import with real-time price updates.
 
 ## Architecture
 
 The application follows a clean modular MVC-like pattern:
 
 ### Core Application
-- **`CLM.py`** - Main CLI controller with interactive menu system
+- **`CLM.py`** - Main CLI controller with simplified menu system
 - **`clm_data.py`** - Core data manager handling CSV imports, JSON persistence, and price fetching
 
 ### Views (Display Layer)
 - **`views/active_positions.py`** - Live position monitoring with range status and integrated token performance
 - **`views/allocation_breakdown.py`** - Portfolio allocation analysis
-- **`views/historical_returns.py`** - Performance tracking
-- **`views/historical_performance.py`** - Multi-timeframe token performance analysis
-- **`views/prices.py`** - Real-time pricing dashboard with FX rates
+- **`views/performance.py`** - Combined performance tracking and token analysis
 - **`views/transactions.py`** - Transaction history
-
-### Utilities (Shared Components)
-- **`utils/formatting.py`** - Shared formatting utilities (currency, percentages, numbers)
-- **`utils/calculations.py`** - Common calculation functions (totals, averages, allocations)
 
 ## Key Data Flow
 
@@ -43,21 +37,15 @@ pip install -r requirements.txt
 
 ### Running the Application
 ```bash
-# Auto-detect mode (recommended)
+# Simple mode (recommended)
 python CLM.py
-
-# Manual conversion then monitor
-python CLM.py convert <neutral_csv> <long_csv>
-python CLM.py monitor
-
-# Direct monitor (assumes JSON files exist)
-python CLM.py monitor
 ```
 
 ### Data Management
 - Place CSV files at default paths: `data/Tokens_Trade_Sheet - Neutral Positions.csv` and `data/Tokens_Trade_Sheet - Long Positions.csv`
-- Application auto-detects CSV changes and updates JSON files
+- Application loads CSV files and converts to JSON format
 - JSON files are stored in `data/JSON_out/` directory
+- Use the integrated position editor ([e] menu option) to access the custom GPT tool for formatting position data
 
 ## Development Notes
 
@@ -94,6 +82,13 @@ No formal test framework is currently implemented. Manual testing involves:
 
 When adding new features, ensure they follow the existing pattern of separating data management (CLMDataManager) from display logic (Views).
 
+### Simplified Architecture
+The codebase has been simplified with:
+- Consolidated view files (performance.py combines historical returns and token performance)
+- Simplified data manager with unified parsing methods
+- Streamlined CLI menu system
+- Archived legacy components in `archive/` directory
+
 ## Recent Enhancements (June 2025)
 
 ### Position Status Logic
@@ -115,100 +110,21 @@ When adding new features, ensure they follow the existing pattern of separating 
 - **Real-time Timestamps**: Price refresh timestamps shown at bottom of displays
 
 ### CLI Menu System
-Includes 7 main views plus strategy details and natural language querying:
-- [1] Active Positions (with integrated token prices)
-- [2] Transactions
-- [3] Historical Returns  
-- [4] Allocation Breakdown
-- [5] Prices (real-time dashboard)
-- [6] Token Performance (standalone historical view)
-- [7] DefiLlama Dashboard (with AI-powered natural language queries)
-- [L] Long Strategy Details
-- [N] Neutral Strategy Details
+Simplified 5-option system:
+- [1] Active Positions (with integrated token prices and range status)
+- [2] Performance (combined historical returns and token performance)
+- [3] Allocation Breakdown (portfolio allocation analysis)
+- [4] Transactions (transaction history)
+- [e] Edit Positions (link to custom GPT tool for position management)
 
-## Transaction System Enhancements (December 2025)
+## Archive Structure
 
-### Multi-Chain Transaction Support
-- **SUI Integration**: Full SUI blockchain transaction processing with RPC validation
-- **Enhanced Data Processing**: 380+ SUI transactions imported with platform detection
-- **Cross-Chain Tracking**: SOL, ETH, SUI, Base, Arbitrum, Optimism transaction support
+### Legacy Components (moved to archive/)
+- **`archive/views/`**: Old view files (historical_returns.py, historical_performance.py, prices.py, market_analysis.py)
+- **`archive/old_files/`**: Previous versions (clm_data_old.py, V2 system files)
+- **`archive/tests/`**: Test files and validation scripts
+- **`archive/utils/`**: Utility functions (formatting, calculations, API clients)
 
-### Advanced Platform Detection
-- **84.7% Platform Identification Rate**: Enhanced from ~53% through intelligent detection
-- **Contract Address Mapping**: Comprehensive DEX and protocol contract database
-- **Pattern Recognition**: Transaction type and chain-specific platform inference
-- **1,391 Transactions Enhanced**: Massive improvement in platform clarity
-
-### Enhanced Transaction View
-- **Dual-Column Display**: Separate "Token Units" and "USD Value" columns
-- **Smart Filtering**: Automatically excludes approve transactions and zero-value transfers
-- **Intelligent Formatting**: K/M notation for large amounts, appropriate decimals for small amounts
-- **USD Integer Display**: Clean integer USD values when token units > 0.00
-
-### Blockchain Validation Infrastructure
-- **SUI RPC Client** (`sui_api_validator.py`): Full blockchain validation and data enhancement
-- **ETH RPC Client** (`eth_api_validator.py`): Ethereum ecosystem transaction validation  
-- **SOL RPC Client** (`sol_api_validator.py`): Solana program and transaction analysis
-- **Data Enhancement Pipeline**: Automatic USD value calculation and platform detection
-
-### Transaction Analysis Tools
-- **Comprehensive Analytics**: Platform efficiency, gas costs, and strategy breakdowns
-- **Unclear Transaction Detection**: Automated identification of transactions needing review
-- **Historical Price Integration**: USD value calculation at transaction time
-- **Multi-Format Support**: CSV imports from various DEX and wallet sources
-
-## Data Management System V2 (January 2025)
-
-### New Normalized Architecture
-A new data management system has been implemented alongside the existing CSV import method for testing and future production use.
-
-#### Core Components
-- **`data_models.py`**: Normalized data models with proper relationships using dataclasses and enums
-- **`data_manager_v2.py`**: Full CRUD operations for all entities with JSON-based storage
-- **`platform_apis.py`**: Direct platform API integrations for real-time data
-- **`test_data_manager_v2.py`**: Comprehensive test suite for all functionality
-- **`clm_v2_cli.py`**: Command-line interface for V2 system management
-
-#### Data Model Schema
-```python
-# Core entities with proper relationships
-Wallet → Positions → Transactions
-Token ← TradingPair → Platform
-Position ← PriceData → Portfolio Snapshots
-```
-
-#### Direct Platform Integration
-- **Raydium API**: `https://api.raydium.io/v2/` - AMM pools and positions
-- **Orca API**: `https://api.orca.so/v1/` - Whirlpool data
-- **Jupiter API**: `https://api.jup.ag/` - Perpetual positions
-- **CETUS API**: `https://api-sui.cetus.zone/` - SUI DEX data
-- **GMX API**: `https://api.gmx.io/` - Arbitrum perpetuals
-
-#### Key Features
-- **Normalized Schema**: Eliminates data duplication and inconsistencies
-- **Type Safety**: Dataclasses with enums prevent data corruption
-- **Direct APIs**: "Closest to ground truth" approach eliminates third-party data risks
-- **Real-time Updates**: Live data from official platform APIs
-- **Parallel Testing**: Runs alongside existing system for validation
-- **JSON Storage**: Database-ready structure with proper relationships
-
-#### Testing V2 System
-```bash
-# Run comprehensive test suite
-python test_data_manager_v2.py
-
-# CLI operations
-python clm_v2_cli.py list wallets
-python clm_v2_cli.py create position wallet_id SOL USDC raydium long clm 1000
-python clm_v2_cli.py portfolio
-python clm_v2_cli.py health  # Check API connectivity
-```
-
-#### Migration Path
-The V2 system is designed to eventually replace the current CSV import method after thorough testing. It provides:
-- Better data integrity through normalized relationships
-- Real-time updates from official platform APIs
-- Scalable architecture for production use
-- Comprehensive testing framework
-- Direct blockchain data access without third-party intermediaries
+### Archived V2 System
+A more complex V2 system with normalized data models and direct platform APIs has been archived for potential future use. The current system prioritizes simplicity and maintainability.
 

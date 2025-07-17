@@ -5,10 +5,7 @@ CLM Portfolio Tracker - Main CLI Controller
 
 import sys
 import os
-import pandas as pd
-from time import sleep
-from datetime import datetime, timedelta
-import select
+from datetime import datetime
 
 # Load environment variables
 try:
@@ -16,284 +13,89 @@ try:
     load_dotenv()
 except ImportError:
     pass
+
 from clm_data import CLMDataManager
 from views.active_positions import ActivePositionsView
 from views.transactions import TransactionsView
-from views.historical_returns import HistoricalReturnsView
+from views.performance import PerformanceView
 from views.allocation_breakdown import AllocationBreakdownView
-from views.prices import PricesView
-from views.historical_performance import HistoricalPerformanceView
-from views.market_analysis import MarketAnalysisView
 
 class CLMTracker:
     def __init__(self):
         self.data_manager = CLMDataManager()
         self.active_view = ActivePositionsView(self.data_manager)
         self.transactions_view = TransactionsView(self.data_manager)
-        self.historical_view = HistoricalReturnsView(self.data_manager)
+        self.performance_view = PerformanceView(self.data_manager)
         self.breakdown_view = AllocationBreakdownView(self.data_manager)
-        self.prices_view = PricesView(self.data_manager)
-        self.historical_performance_view = HistoricalPerformanceView(self.data_manager)
-        self.market_analysis_view = MarketAnalysisView()
-        self.last_auto_refresh = datetime.now()  # Track time of last auto-refresh
         
     def run_cli(self):
-        """Main CLI loop"""
+        """Simplified main CLI loop"""
         while True:
-            # Check if 15 minutes have passed since last auto-refresh
-            time_since_refresh = datetime.now() - self.last_auto_refresh
-            if time_since_refresh > timedelta(minutes=15):
-                print("🔄 Auto-refreshing prices (15 minutes elapsed)...")
-                self.data_manager.refresh_prices_and_status()
-                self.last_auto_refresh = datetime.now()
-                
-                
-                sleep(1)  # Brief pause to show message
-            else:
-                # Regular refresh on each loop
-                self.data_manager.refresh_prices_and_status()
+            # Refresh prices on each loop
+            self.data_manager.refresh_prices_and_status()
             
             # Clear screen and show main view
             print("\033[2J\033[H")
             self.active_view.display()
             
-            # Show menu
+            # Show simplified menu
             print(f"\n{'='*120}")
-            print("📊 Views: [1] Active Positions  [2] Returns  [3] Weights  [4] Markets")
-            print("🔧 Actions: [r]efresh | [i]mport transactions | [q]uit")
+            print("Views: [1] Active  [2] Performance  [3] Allocation  [4] Transactions  [e]dit  [q]uit")
             print("="*120)
             
             try:
-                # Non-blocking input check for auto-refresh
-                print("\nSelect view or action: ", end='', flush=True)
+                choice = input("\nSelect: ").lower().strip()
                 
-                # Check for input with timeout
-                timeout = 0.5  # Check every 0.5 seconds
-                start_time = datetime.now()
-                choice = ""
-                
-                while True:
-                    # Check if we need to auto-refresh
-                    time_since_refresh = datetime.now() - self.last_auto_refresh
-                    if time_since_refresh > timedelta(minutes=15):
-                        print("\n🔄 Auto-refreshing prices (15 minutes elapsed)...")
-                        self.data_manager.refresh_prices_and_status()
-                        self.last_auto_refresh = datetime.now()
-                        break  # Exit input loop to redraw screen
-                    
-                    # Check for user input (platform-specific)
-                    if sys.platform == 'win32':
-                        # Windows doesn't support select on stdin
-                        import msvcrt
-                        if msvcrt.kbhit():
-                            char = msvcrt.getch().decode('utf-8', errors='ignore')
-                            if char == '\r' or char == '\n':
-                                break
-                            elif char == '\x08':  # Backspace
-                                if choice:
-                                    choice = choice[:-1]
-                                    print('\b \b', end='', flush=True)
-                            else:
-                                choice += char
-                                print(char, end='', flush=True)
-                    else:
-                        # Unix/Linux/Mac
-                        if sys.stdin in select.select([sys.stdin], [], [], timeout)[0]:
-                            line = sys.stdin.readline().strip()
-                            choice = line
-                            break
-                    
-                    # Small sleep to prevent CPU spinning
-                    sleep(0.1)
-                
-                choice = choice.lower().strip()
-                
-                # If we broke out due to auto-refresh and no choice made, continue
-                if not choice and time_since_refresh > timedelta(minutes=15):
-                    continue
-                
-                if choice in ['q', 'quit', 'exit']:
+                if choice in ['q', 'quit']:
                     print("👋 Goodbye!")
                     break
-                elif choice in ['1', 'main', 'active', 'positions']:
+                elif choice == '1':
                     continue  # Stay on home view
-                elif choice in ['2', 'portfolio', 'returns']:
-                    print("\033[2J\033[H")
-                    self.historical_view.display()
-                    input("\nPress Enter to return...")
-                elif choice in ['3', 'weights', 'allocation']:
-                    print("\033[2J\033[H")
-                    self.breakdown_view.display()
-                    input("\nPress Enter to return...")
-                elif choice in ['4', 'markets', 'market']:
-                    print("\033[2J\033[H")
-                    # Show market submenu
-                    print("📊 Market Analysis")
-                    print("="*60)
-                    print("[1] Token Historical Performance")
-                    print("[2] DefiLlama Dashboard & Queries")
-                    print("[3] Current Prices")
-                    print("[b] Back to main menu")
-                    
-                    market_choice = input("\nSelect market view: ").lower().strip()
-                    if market_choice == '1':
-                        print("\033[2J\033[H")
-                        self.historical_performance_view.display()
-                        input("\nPress Enter to return...")
-                    elif market_choice == '2':
-                        print("\033[2J\033[H")
-                        self.market_analysis_view.display()
-                        input("\nPress Enter to return...")
-                    elif market_choice == '3':
-                        print("\033[2J\033[H")
-                        self.prices_view.display()
-                        input("\nPress Enter to return...")
-                elif choice in ['r', 'refresh']:
-                    print("🔄 Refreshing data...")
-                    self.last_auto_refresh = datetime.now()  # Reset auto-refresh timer
-                    continue
-                elif choice in ['i', 'import']:
-                    print("\033[2J\033[H")
-                    self.import_transactions_menu()
-                    input("\nPress Enter to return...")
+                elif choice == '2':
+                    self._show_view(self.performance_view)
+                elif choice == '3':
+                    self._show_view(self.breakdown_view)
+                elif choice == '4':
+                    self._show_view(self.transactions_view)
+                elif choice in ['e', 'edit']:
+                    self._show_edit_link()
                 else:
-                    print("❌ Invalid choice. Use 1, 2, 3, 4, i, r, or q")
-                    sleep(1)
+                    print("❌ Invalid choice")
+                    input("Press Enter to continue...")
                     
             except KeyboardInterrupt:
                 print("\n👋 Goodbye!")
                 break
     
-    def import_transactions_menu(self):
-        """Interactive transaction import menu"""
-        print("📥 Transaction Import Menu")
-        print("=" * 50)
-        
-        # Check for CSV files in data directory
-        import os
-        csv_files = []
-        if os.path.exists('data'):
-            csv_files = [f for f in os.listdir('data') if f.endswith('.csv')]
-        
-        print("\n🔍 Available CSV files in data/ directory:")
-        if not csv_files:
-            print("   ❌ No CSV files found in data/ directory")
-            print("\n📋 To import transactions:")
-            print("   1. Copy your transaction CSV to the data/ folder")
-            print("   2. Supported formats: wallet exports, DEX transaction history")
-            print("   3. Required columns: Transaction ID, Wallet Address, Platform")
-            print("   4. Optional: Gas Fees, Block Number, Contract Address")
-            return
-        
-        # Show available files
-        transaction_csvs = []
-        for i, csv_file in enumerate(csv_files, 1):
-            print(f"   [{i}] {csv_file}")
-            if any(word in csv_file.lower() for word in ['transaction', 'tx', 'wallet', 'dex']):
-                transaction_csvs.append(csv_file)
-        
-        if not transaction_csvs:
-            print("\n💡 No obvious transaction files found.")
-            print("   Transaction files usually contain: 'transaction', 'tx', 'wallet', or 'dex' in the name")
-        
-        print(f"\n🔧 Import Options:")
-        print(f"   [a] Auto-import all transaction-like CSV files")
-        print(f"   [s] Select specific file by number")
-        print(f"   [c] Cancel")
-        
-        choice = input("\nChoice: ").lower().strip()
-        
-        if choice == 'c':
-            return
-        elif choice == 'a':
-            # Auto-import transaction files
-            if not transaction_csvs:
-                print("❌ No transaction CSV files detected")
-                return
-            
-            print(f"📤 Auto-importing {len(transaction_csvs)} transaction files...")
-            self.batch_import_transactions(transaction_csvs)
-            
-        elif choice == 's':
-            # Select specific file
-            try:
-                file_num = int(input("Enter file number: "))
-                if 1 <= file_num <= len(csv_files):
-                    selected_file = csv_files[file_num - 1]
-                    print(f"📤 Importing: {selected_file}")
-                    
-                    # Ask for chain
-                    chain = input("Enter chain (SOL/ETH/SUI/BASE/ARB) [default: SOL]: ").upper().strip()
-                    if not chain:
-                        chain = 'SOL'
-                    
-                    csv_path = f'data/{selected_file}'
-                    transactions = self.data_manager.import_transaction_csv(csv_path, chain)
-                    
-                    if transactions:
-                        self.data_manager.save_transactions(transactions)
-                        print(f"✅ Imported {len(transactions)} transactions")
-                        
-                        # Show summary
-                        total_gas = sum(tx.get('gas_fees', 0) or 0 for tx in transactions)
-                        platforms = set(tx.get('platform') for tx in transactions)
-                        print(f"   ⛓️  Chain: {chain}")
-                        print(f"   🏪 Platforms: {len(platforms)} different")
-                        print(f"   ⛽ Total Gas: ${total_gas:.6f}")
-                    else:
-                        print("❌ No transactions imported")
-                else:
-                    print("❌ Invalid file number")
-            except ValueError:
-                print("❌ Please enter a valid number")
-        else:
-            print("❌ Invalid choice")
+    def _show_view(self, view):
+        """Helper to display a view and wait for user"""
+        print("\033[2J\033[H")
+        view.display()
+        input("\nPress Enter to return...")
     
-    def batch_import_transactions(self, csv_files):
-        """Import multiple transaction CSV files"""
-        all_transactions = []
-        
-        for csv_file in csv_files:
-            csv_path = f'data/{csv_file}'
-            
-            # Auto-detect chain from filename
-            chain = 'SOL'  # Default
-            filename_lower = csv_file.lower()
-            if 'eth' in filename_lower:
-                chain = 'ETH'
-            elif 'sui' in filename_lower:
-                chain = 'SUI'
-            elif 'base' in filename_lower:
-                chain = 'BASE'
-            elif 'arb' in filename_lower:
-                chain = 'ARB'
-            
-            print(f"   📂 {csv_file} ({chain})")
-            transactions = self.data_manager.import_transaction_csv(csv_path, chain)
-            
-            if transactions:
-                all_transactions.extend(transactions)
-                print(f"      ✅ {len(transactions)} transactions imported")
-            else:
-                print(f"      ❌ No transactions found")
-        
-        if all_transactions:
-            self.data_manager.save_transactions(all_transactions)
-            
-            # Show summary
-            chains = set(tx['chain'] for tx in all_transactions)
-            platforms = set(tx['platform'] for tx in all_transactions)
-            total_gas = sum(tx.get('gas_fees', 0) or 0 for tx in all_transactions)
-            
-            print(f"\n✅ Batch Import Complete!")
-            print(f"   📊 Total: {len(all_transactions)} transactions")
-            print(f"   ⛓️  Chains: {', '.join(chains)}")
-            print(f"   🏪 Platforms: {len(platforms)} different")
-            print(f"   ⛽ Total Gas: ${total_gas:.6f}")
-            print(f"   💾 Saved to: data/JSON_out/clm_transactions.json")
-        else:
-            print("\n❌ No transactions imported from any file")
-    
+    def _show_edit_link(self):
+        """Display the position editing tool link"""
+        print("\033[2J\033[H")
+        print("🔧 CLM POSITION EDITOR")
+        print("="*120)
+        print()
+        print("📝 Custom GPT Tool for Position Management:")
+        print("   https://chatgpt.com/share/68792b62-7bb4-8009-9f05-3431d386ebca")
+        print()
+        print("💡 This tool helps you:")
+        print("   • Format position data for CSV import")
+        print("   • Create properly structured JSON files")
+        print("   • Prepare active positions for the CLM tracker")
+        print("   • Convert various data formats to the required schema")
+        print()
+        print("📋 Instructions:")
+        print("   1. Copy your position data to the ChatGPT tool")
+        print("   2. Follow the tool's guidance to format the data")
+        print("   3. Export the formatted CSV/JSON files")
+        print("   4. Place files in the data/ directory")
+        print("   5. Restart the CLM tracker to load new positions")
+        print()
+        input("Press Enter to return to main menu...")
     
 
 def main():
@@ -303,100 +105,25 @@ def main():
     neutral_csv = "data/Tokens_Trade_Sheet - Neutral Positions.csv"
     long_csv = "data/Tokens_Trade_Sheet - Long Positions.csv"
     
-    if len(sys.argv) > 1:
-        command = sys.argv[1]
-        
-        if command == "convert":
-            if len(sys.argv) < 4:
-                print("Usage: python clm.py convert <neutral_csv> <long_csv>")
-                return
-            
-            neutral_csv = sys.argv[2]
-            long_csv = sys.argv[3]
-            
-            if not os.path.exists(neutral_csv):
-                print(f"❌ File not found: {neutral_csv}")
-                return
-            if not os.path.exists(long_csv):
-                print(f"❌ File not found: {long_csv}")
-                return
-                
-            tracker.data_manager.update_positions(neutral_csv, long_csv)
-            
-        elif command == "monitor":
-            tracker.data_manager.load_positions()
-            tracker.run_cli()
-            
+    print("🚀 CLM Portfolio Tracker")
+    
+    # Check for CSV files
+    if os.path.exists(neutral_csv) and os.path.exists(long_csv):
+        print("📁 Found position CSV files")
+        tracker.data_manager.load_from_csv(neutral_csv, long_csv)
     else:
-        # Enhanced auto-detect mode with automatic CSV scanning
-        print("🚀 CLM Portfolio Tracker - Auto-detect mode")
-        print("🔍 Scanning for CSV files in data folder...")
-        
-        # Use the new automatic detection system
-        results = tracker.data_manager.auto_detect_and_process_csvs()
-        
-        # Check if we found any data to process
-        total_new_files = len(results['new_files']) + len(results['updated_files'])
-        
-        if total_new_files > 0:
-            print("🔄 Processing new/updated CSV files...")
-            tracker.data_manager.merge_incremental_data(results['processed_data'])
+        # Try loading existing JSON data
+        if tracker.data_manager.load_positions():
+            print("✅ Loaded existing data")
         else:
-            # Fall back to legacy mode if no new files found
-            if os.path.exists(neutral_csv) and os.path.exists(long_csv):
-                if tracker.data_manager.check_for_updates(neutral_csv, long_csv):
-                    print("🔄 Legacy CSV files changed, updating positions...")
-                    # Process legacy CSV files through the auto-detect system
-                    legacy_results = {
-                        'processed_data': {
-                            'positions': {'long': [], 'neutral': []},
-                            'transactions': [],
-                            'balances': []
-                        }
-                    }
-                    
-                    # Process neutral positions
-                    neutral_df = pd.read_csv(neutral_csv)
-                    neutral_df = tracker.data_manager.clean_csv_data(neutral_df)
-                    csv_format = tracker.data_manager.detect_csv_format(neutral_df)
-                    for _, row in neutral_df.iterrows():
-                        position = tracker.data_manager.parse_position(row, 'neutral', csv_format)
-                        legacy_results['processed_data']['positions']['neutral'].append(position)
-                    
-                    # Process long positions
-                    long_df = pd.read_csv(long_csv)
-                    long_df = tracker.data_manager.clean_csv_data(long_df)
-                    csv_format = tracker.data_manager.detect_csv_format(long_df)
-                    for _, row in long_df.iterrows():
-                        position = tracker.data_manager.parse_position(row, 'long', csv_format)
-                        legacy_results['processed_data']['positions']['long'].append(position)
-                    
-                    # Merge the data
-                    tracker.data_manager.merge_incremental_data(legacy_results['processed_data'])
-                    
-                    # Update metadata
-                    metadata = {
-                        "last_update": datetime.now().isoformat(),
-                        "neutral_csv_hash": tracker.data_manager.get_file_hash(neutral_csv),
-                        "long_csv_hash": tracker.data_manager.get_file_hash(long_csv),
-                        "neutral_csv_path": neutral_csv,
-                        "long_csv_path": long_csv
-                    }
-                    tracker.data_manager.save_metadata(metadata)
-                else:
-                    print("✅ Loading existing data...")
-                    tracker.data_manager.load_positions()
-            else:
-                print("⚠️  No CSV files found!")
-                print("\nSetup Options:")
-                print(f"1. Place CSV files in the data/ folder")
-                print(f"2. Supported formats: positions, transactions, balances")
-                print(f"3. Or use legacy paths: {neutral_csv} and {long_csv}")
-                print("4. Then run 'python clm.py' again")
-                return
-        
-        # Start monitoring
-        tracker.run_cli()
+            print("⚠️  No data found!")
+            print(f"\nPlace CSV files at:")
+            print(f"  - {neutral_csv}")
+            print(f"  - {long_csv}")
+            return
+    
+    # Start monitoring
+    tracker.run_cli()
 
 if __name__ == "__main__":
     main()

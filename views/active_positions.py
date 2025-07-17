@@ -66,9 +66,16 @@ class ActivePositionsView:
         # Display Token Prices and Allocation by Chain
         self._display_token_prices_and_allocation()
         
-        # Display last refresh time (but no additional section headers)
+        # Display last refresh time and edit link
         last_refresh = getattr(self.data_manager, 'last_price_update', datetime.now())
         print(f"\n🕐 Last refreshed: {last_refresh.strftime('%Y-%m-%d %H:%M:%S')}")
+        
+        # Add edit positions link
+        print("\n" + "="*120)
+        print("🔧 POSITION MANAGEMENT")
+        print("="*120)
+        print("📝 Edit Active Positions: https://chatgpt.com/share/68792b62-7bb4-8009-9f05-3431d386ebca")
+        print("   Use this custom GPT tool to format and prepare your position data for import")
         
     def _display_positions_table(self, positions):
         """Display a table of positions with improved formatting for large terminal"""
