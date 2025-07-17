@@ -101,15 +101,19 @@ class CLMTracker:
 def main():
     tracker = CLMTracker()
     
-    # Default CSV paths
+    # CSV file paths (prioritize combined file)
+    combined_csv = "data/Tokens_Trade_Sheet - Positions Status.csv"
     neutral_csv = "data/Tokens_Trade_Sheet - Neutral Positions.csv"
     long_csv = "data/Tokens_Trade_Sheet - Long Positions.csv"
     
     print("🚀 CLM Portfolio Tracker")
     
-    # Check for CSV files
-    if os.path.exists(neutral_csv) and os.path.exists(long_csv):
-        print("📁 Found position CSV files")
+    # Check for combined CSV file first
+    if os.path.exists(combined_csv):
+        print("📁 Found combined positions CSV file")
+        tracker.data_manager.load_from_combined_csv(combined_csv)
+    elif os.path.exists(neutral_csv) and os.path.exists(long_csv):
+        print("📁 Found separate position CSV files")
         tracker.data_manager.load_from_csv(neutral_csv, long_csv)
     else:
         # Try loading existing JSON data
@@ -118,6 +122,8 @@ def main():
         else:
             print("⚠️  No data found!")
             print(f"\nPlace CSV files at:")
+            print(f"  - {combined_csv} (combined positions)")
+            print(f"  OR")
             print(f"  - {neutral_csv}")
             print(f"  - {long_csv}")
             return

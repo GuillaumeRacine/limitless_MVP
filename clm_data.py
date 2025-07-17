@@ -33,12 +33,15 @@ class CLMDataManager:
         
         if isinstance(value, str):
             if value_type == 'currency':
-                value = value.replace('$', '').replace(',', '')
+                value = value.replace('$', '').replace(',', '').strip()
             elif value_type == 'percentage':
-                value = value.replace('%', '')
+                value = value.replace('%', '').strip()
+            
+            # Remove any quotes that might be in the value
+            value = value.replace('"', '').replace("'", '')
             
             try:
-                return float(value.strip())
+                return float(value)
             except ValueError:
                 return None
         
@@ -126,7 +129,7 @@ class CLMDataManager:
         
         # Override strategy if specified in row
         if 'Strategy' in row.index and pd.notna(row['Strategy']):
-            strategy = str(row['Strategy']).lower()
+            strategy = str(row['Strategy']).lower().strip()
         
         # Normalize token pair format for pricing
         pair = self._normalize_token_pair(pair)
@@ -155,8 +158,8 @@ class CLMDataManager:
             'entry_value': entry_value,
             'entry_date': str(self.get_column_value(row, 'entry_date') or ''),
             'days_active': float(row.get('Days #')) if pd.notna(row.get('Days #')) else None,
-            'min_range': float(row['Min Range']) if pd.notna(row.get('Min Range')) else None,
-            'max_range': float(row['Max Range']) if pd.notna(row.get('Max Range')) else None,
+            'min_range': self.parse_value(row.get('Min Range'), 'currency'),
+            'max_range': self.parse_value(row.get('Max Range'), 'currency'),
             'exit_date': str(exit_date) if pd.notna(exit_date) and str(exit_date).strip() != '' else None,
             'exit_value': self.parse_value(row.get('Exit Value'), 'currency'),
             'claimed_yield_value': self.parse_value(row.get('Claimed Yield Value'), 'currency'),
@@ -249,6 +252,49 @@ class CLMDataManager:
         
         total_active = len(self.long_positions) + len(self.neutral_positions)
         print(f"📊 Loaded {total_active} active positions ({len(self.long_positions)} long, {len(self.neutral_positions)} neutral) + {len(self.closed_positions)} closed")
+    
+    def load_from_combined_csv(self, csv_path: str):
+        """Load positions from a single combined CSV file with Strategy column"""
+        import pandas as pd
+        
+        if not os.path.exists(csv_path):
+            print(f"❌ File not found: {csv_path}")
+            return
+        
+        print(f"📄 Loading combined CSV: {csv_path}")
+        
+        # Clear existing positions
+        self.long_positions = []
+        self.neutral_positions = []
+        self.closed_positions = []
+        
+        try:
+            df = pd.read_csv(csv_path)
+            df = self.clean_csv_data(df)
+            
+            for _, row in df.iterrows():
+                # Parse position - strategy will be determined from the Strategy column
+                position = self.parse_position(row, 'unknown')
+                
+                if position['is_active']:
+                    if position['strategy'] == 'long':
+                        self.long_positions.append(position)
+                    elif position['strategy'] == 'neutral':
+                        self.neutral_positions.append(position)
+                    else:
+                        print(f"⚠️  Unknown strategy '{position['strategy']}' for position: {position['position_details']}")
+                else:
+                    self.closed_positions.append(position)
+            
+            # Save to JSON
+            self.save_positions()
+            
+            total_active = len(self.long_positions) + len(self.neutral_positions)
+            print(f"📊 Loaded {total_active} active positions ({len(self.long_positions)} long, {len(self.neutral_positions)} neutral) + {len(self.closed_positions)} closed")
+            
+        except Exception as e:
+            print(f"❌ Error loading combined CSV: {e}")
+            return
     
     def load_transactions(self) -> list:
         """Load transaction data from JSON"""
