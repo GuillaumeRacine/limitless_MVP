@@ -67,6 +67,13 @@ archive/                  # Legacy components
 
 ## Configuration
 
+### Environment Variables (Optional)
+Create a `.env` file from the template for optional features:
+```bash
+cp .env.example .env
+# Edit .env with your credentials (never commit this file!)
+```
+
 ### Supported Tokens
 - **Major Crypto**: BTC, ETH, SOL, SUI
 - **Stablecoins**: USDC, USDT  
@@ -159,3 +166,29 @@ Legacy components have been moved to `archive/` for reference:
 4. Update documentation for new features
 
 For questions or issues, check the existing code structure and API integrations in the main application files.
+
+## Security
+
+### 🔒 Important Security Notes
+
+**Never commit sensitive information:**
+- The `.env` file is in `.gitignore` and should never be committed
+- Use `.env.example` as a template only
+- Store actual credentials only in your local `.env` file
+
+**Safe practices:**
+- Copy `.env.example` to `.env` and add real credentials
+- Never add API keys directly to source code
+- Rotate credentials if accidentally exposed
+- Keep wallet addresses private unless intended to be public
+
+### 🛡️ Environment File Security
+```bash
+# ✅ Safe - template file
+.env.example
+
+# ❌ NEVER commit this file
+.env
+```
+
+The application works without any API keys - they are only needed for optional features.

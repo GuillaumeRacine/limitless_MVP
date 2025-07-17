@@ -128,3 +128,47 @@ Simplified 5-option system:
 ### Archived V2 System
 A more complex V2 system with normalized data models and direct platform APIs has been archived for potential future use. The current system prioritizes simplicity and maintainability.
 
+## Security Guidelines
+
+### 🔒 Critical Security Rules
+
+**NEVER commit sensitive information to git:**
+- `.env` files with real credentials
+- Private keys or API keys
+- Personal wallet addresses (unless public)
+- Database credentials
+- Authentication tokens
+
+### 🛡️ Environment Variables
+- Use `.env.example` as a template
+- Copy to `.env` and add real credentials
+- The `.env` file is in `.gitignore` and should never be committed
+- Store sensitive data only in the local `.env` file
+
+### 📋 Before Every Commit
+Claude Code should always:
+1. Check for `.env` files in staging area
+2. Verify no API keys or credentials are in code
+3. Scan for private keys or sensitive data
+4. Refuse to commit if security issues are found
+
+### 🚨 If Credentials Are Accidentally Committed
+1. Remove from git tracking: `git rm --cached .env`
+2. Update `.gitignore` to include the file
+3. Remove from git history if necessary
+4. Rotate/regenerate any exposed credentials
+5. Force push to overwrite GitHub history
+
+### 🔍 Security Checklist
+- [ ] No `.env` files in git
+- [ ] No API keys in source code
+- [ ] No private keys or credentials
+- [ ] No personal information in comments
+- [ ] `.gitignore` properly configured
+
+### 📁 Safe Files to Commit
+- `.env.example` (template only)
+- Source code without credentials
+- Configuration files without sensitive data
+- Documentation and README files
+
